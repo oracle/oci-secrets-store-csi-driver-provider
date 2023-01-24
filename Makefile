@@ -7,8 +7,18 @@
 $(eval BUILD_DATE=$(shell date -u +%Y.%m.%d.%H.%M))
 $(eval GIT_TAG=$(shell git log -n 1 --pretty=format:"%H"))
 BUILD_VERSION=$(GIT_TAG)-$(BUILD_DATE)
-IMAGE_REPO=oci-secrets-store-csi-driver-provider
+IMAGE_REPO_NAME=oci-secrets-store-csi-driver-provider
+
+ifeq "$(IMAGE_REGISTRY)" ""
+	IMAGE_REGISTRY  ?= ghcr.io/oracle-samples
+else
+	IMAGE_REGISTRY	?= ${IMAGE_REGISTRY}
+endif
+
+# IMAGE_REPO=$(IMAGE_REGISTRY)/oci-secrets-store-csi-driver-provider
+IMAGE_URL=$(IMAGE_REGISTRY)/$(IMAGE_REPO_NAME)
 IMAGE_TAG=$(GIT_TAG)
+IMAGE_PATH=$(IMAGE_URL):$(IMAGE_TAG)
 
 LDFLAGS?="-X github.com/oracle-samples/oci-secrets-store-csi-driver-provider/internal/server.BuildVersion=$(BUILD_VERSION)"
 
@@ -36,11 +46,14 @@ build: cmd/server/main.go
 	go build -ldflags $(LDFLAGS) -mod vendor -o dist/provider ./cmd/server/main.go
 
 docker-build:
-	docker build -t ${IMAGE_REPO}:${IMAGE_TAG} -f build/Dockerfile .
-	# docker buildx build --platform=linux/amd64 -t ${IMAGE_REPO}:${IMAGE_TAG}  -f build/Dockerfile .   
+	# docker build -t ${IMAGE_PATH} -f build/Dockerfile .
+	docker buildx build --platform=linux/amd64 -t ${IMAGE_PATH} -f build/Dockerfile .   
+
+docker-push:
+	docker push ${IMAGE_PATH}
 
 docker-build-push: docker-build
-	docker push ${IMAGE_REPO}:${IMAGE_TAG}
+	docker push ${IMAGE_PATH}
 
 test-coverage:
 	go test -coverprofile=cover.out ./…

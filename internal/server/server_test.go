@@ -12,9 +12,9 @@ import (
 	"strings"
 	"testing"
 
-	"bitbucket.com/oracle/oci-secrets-store-csi-driver-provider/internal/service"
-	"bitbucket.com/oracle/oci-secrets-store-csi-driver-provider/internal/testutils"
-	"bitbucket.com/oracle/oci-secrets-store-csi-driver-provider/internal/types"
+	"github.com/oracle-samples/oci-secrets-store-csi-driver-provider/internal/service"
+	"github.com/oracle-samples/oci-secrets-store-csi-driver-provider/internal/testutils"
+	"github.com/oracle-samples/oci-secrets-store-csi-driver-provider/internal/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	provider "sigs.k8s.io/secrets-store-csi-driver/provider/v1alpha1"

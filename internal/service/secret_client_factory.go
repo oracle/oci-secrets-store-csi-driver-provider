@@ -11,7 +11,7 @@ import (
 	"net/http"
 	"time"
 
-	"bitbucket.com/oracle/oci-secrets-store-csi-driver-provider/internal/types"
+	"github.com/oracle-samples/oci-secrets-store-csi-driver-provider/internal/types"
 	"github.com/oracle/oci-go-sdk/v65/common"
 	"github.com/oracle/oci-go-sdk/v65/common/auth"
 	"github.com/oracle/oci-go-sdk/v65/secrets"

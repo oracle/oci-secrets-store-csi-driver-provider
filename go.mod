@@ -1,4 +1,4 @@
-module bitbucket.com/oracle/oci-secrets-store-csi-driver-provider
+module github.com/oracle-samples/oci-secrets-store-csi-driver-provider
 
 go 1.17
 

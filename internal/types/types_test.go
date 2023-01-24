@@ -9,7 +9,7 @@ package types
 import (
 	"testing"
 
-	"bitbucket.com/oracle/oci-secrets-store-csi-driver-provider/internal/testutils"
+	"github.com/oracle-samples/oci-secrets-store-csi-driver-provider/internal/testutils"
 	"gopkg.in/yaml.v3"
 )
 

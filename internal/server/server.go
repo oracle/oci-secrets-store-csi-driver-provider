@@ -15,8 +15,8 @@ import (
 
 	"os"
 
-	"bitbucket.com/oracle/oci-secrets-store-csi-driver-provider/internal/service"
-	"bitbucket.com/oracle/oci-secrets-store-csi-driver-provider/internal/types"
+	"github.com/oracle-samples/oci-secrets-store-csi-driver-provider/internal/service"
+	"github.com/oracle-samples/oci-secrets-store-csi-driver-provider/internal/types"
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

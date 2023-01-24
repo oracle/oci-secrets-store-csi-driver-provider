@@ -12,8 +12,8 @@ import (
 	"sort"
 	"testing"
 
-	"bitbucket.com/oracle/oci-secrets-store-csi-driver-provider/internal/testutils"
-	"bitbucket.com/oracle/oci-secrets-store-csi-driver-provider/internal/types"
+	"github.com/oracle-samples/oci-secrets-store-csi-driver-provider/internal/testutils"
+	"github.com/oracle-samples/oci-secrets-store-csi-driver-provider/internal/types"
 	"github.com/oracle/oci-go-sdk/v65/common"
 	"github.com/oracle/oci-go-sdk/v65/secrets"
 )

@@ -13,7 +13,7 @@ import (
 	"sort"
 	"testing"
 
-	"bitbucket.com/oracle/oci-secrets-store-csi-driver-provider/internal/types"
+	"github.com/oracle-samples/oci-secrets-store-csi-driver-provider/internal/types"
 	"gopkg.in/yaml.v3"
 	provider "sigs.k8s.io/secrets-store-csi-driver/provider/v1alpha1"
 )

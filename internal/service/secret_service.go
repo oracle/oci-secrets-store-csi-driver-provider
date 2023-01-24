@@ -10,7 +10,7 @@ import (
 	"context"
 	"fmt"
 
-	"bitbucket.com/oracle/oci-secrets-store-csi-driver-provider/internal/types"
+	"github.com/oracle-samples/oci-secrets-store-csi-driver-provider/internal/types"
 	"github.com/oracle/oci-go-sdk/v65/secrets"
 	"github.com/rs/zerolog/log"
 )

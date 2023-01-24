@@ -10,7 +10,7 @@ import (
 	"context"
 	"time"
 
-	"bitbucket.com/oracle/oci-secrets-store-csi-driver-provider/internal/metrics"
+	"github.com/oracle-samples/oci-secrets-store-csi-driver-provider/internal/metrics"
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/status"

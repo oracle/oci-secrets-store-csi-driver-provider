@@ -10,7 +10,7 @@ import (
 	"os"
 	"testing"
 
-	"bitbucket.com/oracle/oci-secrets-store-csi-driver-provider/internal/logging"
+	"github.com/oracle-samples/oci-secrets-store-csi-driver-provider/internal/logging"
 )
 
 // RunTestCase intended to wrap execution of test case methods

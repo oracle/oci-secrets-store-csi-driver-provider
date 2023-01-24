@@ -1,0 +1,67 @@
+#
+# OCI Secrets Store CSI Driver Provider
+# 
+# Copyright (c) 2022 Oracle America, Inc. and its affiliates.
+# Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
+#
+# Default values for OCI Vault Provider.
+
+# OCI Vault provider settings
+provider:
+  # Provider image settings
+  image:
+    repository: oci-secrets-store-csi-driver-provider
+    pullPolicy: IfNotPresent
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: ""
+
+  # Provider container resources
+  resources:
+    requests:
+      cpu: 50m
+      memory: 100Mi
+    limits:
+      cpu: 50m
+      memory: 100Mi
+
+  # K8S "docker-registry" secrets with credentials to private registries
+  imagePullSecrets: []
+
+  # Settings related to OCI (authentication, secrets management)
+  oci:
+    auth:
+      types:
+        instance:
+          enabled: true
+        user:
+          enabled: true
+
+  # socket endpoint for connections
+  endpoint: "unix:///opt/provider/sockets/oci.sock"
+  endpointPermissions: 0600
+  # Liveness probe settings
+  healthzPort: 8098
+
+  # Metrics config
+  metricsBackend: prometheus
+  metricsPort: 8198
+  # Profiling
+  enableProfile: true
+  profilingPort: 6060
+
+
+  # Host directory with sockets for various providers.
+  # Should match with the driver's value "linux.providersDir",
+  # since the driver communicates with providers via sockets in this directory.
+  socketHostDir: "/var/run/secrets-store-csi-providers"
+
+# Secrets Store CSI Driver settings
+secrets-store-csi-driver:
+  # Determines whether to install or not the CSI Driver along with the provider
+  install: true
+  # Install RBAC roles and bindings required for K8S Secrets syncing if true
+  syncSecret:
+    enabled: false
+  enableSecretRotation: false
+  rotationPollInterval: 2m
+    

@@ -1,0 +1,7 @@
+# Binary folder
+dist/
+__debug_bin
+# OCI Build folders
+input_ocibuild/
+output_ocibuild_dockerize_provider/
+output_ocibuild_make_helm/

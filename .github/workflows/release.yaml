@@ -9,24 +9,30 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      IMAGE_PATH: ghcr.io/oracle-actions/oci-secrets-store-csi-driver-provider:${{ github.sha }}
     steps:
 
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3.3.0
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v1
+        uses: docker/setup-qemu-action@v2
         with:
           platforms: amd64  
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
+        uses: docker/setup-buildx-action@v2
 
       - name: Log into GitHub Container Registry
         run: echo "${{ secrets.CR_PAT }}" | docker login ghcr.io -u ${GITHUB_ACTOR,,} --password-stdin
 
       - name: Build Image
-        run: IMAGE_REGISTRY="ghcr.io/oracle-actions" make docker-build
+        # run: IMAGE_REGISTRY="ghcr.io/oracle-actions" make docker-build
+        run: |
+          docker build -t ${{ env.IMAGE_PATH }} -f build/Dockerfile .
 
       - name: Push Image
-        run: IMAGE_REGISTRY="ghcr.io/oracle-actions" make docker-push
+        # run: IMAGE_REGISTRY="ghcr.io/oracle-actions" make docker-push
+        run: |
+          docker push ${{ env.IMAGE_PATH }}

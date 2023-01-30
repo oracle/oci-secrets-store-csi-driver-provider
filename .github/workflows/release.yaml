@@ -10,7 +10,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      IMAGE_PATH: ghcr.io/oracle-samples/oci-secrets-store-csi-driver-provider:${{ github.sha }}
+      IMAGE_REGISTRY: ${{ vars.IMAGE_REGISTRY }}
     steps:
 
       - name: Checkout
@@ -28,11 +28,7 @@ jobs:
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${GITHUB_ACTOR,,} --password-stdin
 
       - name: Build Image
-        # run: IMAGE_REGISTRY="ghcr.io/oracle-actions" make docker-build
-        run: |
-          docker build -t ${{ env.IMAGE_PATH }} -f build/Dockerfile .
+        run: IMAGE_REGISTRY="${{ env.IMAGE_REGISTRY }}" make docker-build
 
       - name: Push Image
-        # run: IMAGE_REGISTRY="ghcr.io/oracle-actions" make docker-push
-        run: |
-          docker push ${{ env.IMAGE_PATH }}
+        run: IMAGE_REGISTRY="${{ env.IMAGE_REGISTRY }}" make docker-push

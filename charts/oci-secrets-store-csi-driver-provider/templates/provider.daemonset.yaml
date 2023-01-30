@@ -1,0 +1,67 @@
+#
+# OCI Secrets Store CSI Driver Provider
+# 
+# Copyright (c) 2022 Oracle America, Inc. and its affiliates.
+# Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
+# 
+# Daemonset manifest for OCI Vault Provider.
+
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  labels:
+    app.kubernetes.io/name: {{ .Chart.Name }}
+  name: {{ .Chart.Name }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  updateStrategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ .Chart.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ .Chart.Name }}
+    spec:
+      serviceAccountName: {{ .Chart.Name }}-sa
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.provider.image.repository }}:{{ .Values.provider.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.provider.image.pullPolicy }}
+          args:
+            - --endpoint={{ .Values.provider.endpoint }}
+            - --endpoint-permissions={{ .Values.provider.endpointPermissions }}
+            - --healthz-port={{ .Values.provider.healthzPort }}
+            - --metrics-port={{ .Values.provider.metricsPort }}
+            - --metrics-backend={{ .Values.provider.metricsBackend }}
+            - --enable-pprof={{ .Values.provider.enableProfile }}
+            - --pprof-port={{ .Values.provider.profilingPort }}
+          ports:
+            - containerPort: {{ .Values.provider.healthzPort }}
+              name: health-port
+            - containerPort: {{ .Values.provider.metricsPort }}
+              name: metrics-port
+          resources:
+            {{- toYaml .Values.provider.resources | nindent 12 }}
+          # Container should run as root to mount the hostPath volume and create Unix Domain Socket in that volume.
+          securityContext:
+            seccompProfile:
+              type: RuntimeDefault
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsUser: 0
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - mountPath: "/opt/provider/sockets"
+              name: socket-volume
+      {{- if .Values.provider.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml .Values.provider.imagePullSecrets | nindent 8 }}
+      {{- end }}
+      volumes:
+        - name: socket-volume
+          hostPath:
+            path: "{{ .Values.provider.socketHostDir }}"         

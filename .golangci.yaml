@@ -1,0 +1,48 @@
+linters:
+  disable-all: true
+  enable:
+    # Linters enabled by default in golangci-lint 1.46.2.
+    # Default linters are listed explicitly for reproducibility and better control over linting rules.
+    # It's recommended to revisit this list after golangci-lint updates.
+    - deadcode
+    - errcheck
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - structcheck
+    - typecheck
+    - unused
+    - varcheck
+
+    # Additional linters
+    - contextcheck  # checks whether the function use a non-inherited context
+    - cyclop        # checks function and package cyclomatic complexity
+    - dupl          # detects code duplication/copy-pasting
+    - funlen        # detects long functions
+    - gocritic      # check for bugs, performance and style issues
+    - gofmt         # checks whether code was gofmt-ed
+    - gosec         # inspects source code for security problems
+    - ireturn       # checks that function accept interfaces and return concrete types
+    - lll           # reports long lines
+    - nilnil        # checks that there is no simultaneous return of nil error and an invalid value
+    - nolintlint    # reports ill-formed or insufficient nolint directives
+    - revive        # finds out style issues, drop-in replacement of golint
+    - tenv          # detects using os.Setenv instead of t.Setenv
+    - thelper       # detects Go test helpers without t.Helper() call and checks the consistency of test helpers
+
+linters-settings:
+  nolintlint:
+    # Disable to ensure that nolint directives don't have a leading space,
+    # because machine-readable comments should have no space by Go convention.
+    allow-leading-space: false
+    # Enable to require an explanation of nonzero length after each nolint directive.
+    require-explanation: true
+    # Enable to require nolint directives to mention the specific linter being suppressed.
+    require-specific: true
+  tenv:
+    # The option `all` will run against whole test files (`_test.go`) regardless of method/function signatures.
+    # By default, only methods that take `*testing.T`, `*testing.B`, and `testing.TB` as arguments are checked.
+    all: true
+  dupl:
+    threshold: 200  

@@ -1,0 +1,15 @@
+{{- if (index .Values "secrets-store-csi-driver" "install") }}
+The Secrets Store CSI Driver and the provider are getting deployed to your cluster.
+
+Verify DaemonSets readiness:
+  kubectl get daemonset \
+      --namespace {{ .Release.Namespace }} \
+      --selector='app.kubernetes.io/name in (oci-secrets-store-csi-driver-provider, secrets-store-csi-driver)'
+
+{{- else }}
+The provider is getting deployed to your cluster.
+
+Verify DaemonSet readiness:
+  kubectl get daemonset --namespace {{ .Release.Namespace }} -l 'app.kubernetes.io/name=oci-secrets-store-csi-driver-provider'
+
+{{- end }}

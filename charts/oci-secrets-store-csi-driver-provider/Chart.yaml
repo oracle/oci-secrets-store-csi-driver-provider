@@ -1,0 +1,26 @@
+#
+# OCI Secrets Store CSI Driver Provider
+# 
+# Copyright (c) 2022 Oracle America, Inc. and its affiliates.
+# Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
+#
+apiVersion: v2
+name: oci-secrets-store-csi-driver-provider
+description: OCI Vault provider for the Secrets Store CSI driver.
+version: 0.2.5
+type: application
+
+appVersion: "0.9.2"
+kubeVersion: ">=1.19.0-0" # CSI Driver 1.2.0 is compatible with K8S 1.19+
+
+dependencies:
+  - name: secrets-store-csi-driver
+    repository: https://kubernetes-sigs.github.io/secrets-store-csi-driver/charts
+    version: 1.2.0
+    condition: secrets-store-csi-driver.install
+
+maintainers:
+  - name: OKE Foundations team
+keywords:
+  - oci
+  - secrets-store-csi-driver-provider

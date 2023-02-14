@@ -1,0 +1,19 @@
+apiVersion: v1
+entries:
+  oci-secrets-store-csi-driver-provider:
+  - apiVersion: v2
+    appVersion: 0.9.2
+    created: "2023-02-14T23:05:21.111808+05:30"
+    description: OCI Vault provider for the Secrets Store CSI driver.
+    digest: 10f5dc2a2ce14ee9a7d87e9482d76476427d71df2e9e35c96a1debb4217ba44c
+    keywords:
+    - oci
+    - secrets-store-csi-driver-provider
+    kubeVersion: '>=1.19.0-0'
+    maintainers:
+    - name: OKE Foundations team
+    name: oci-secrets-store-csi-driver-provider
+    urls:
+    - https://oracle-samples.github.io/oci-secrets-store-csi-driver-provider/oci-secrets-store-csi-driver-provider-0.2.5.tgz
+    version: 0.2.5
+generated: "2023-02-14T23:05:21.102932+05:30"

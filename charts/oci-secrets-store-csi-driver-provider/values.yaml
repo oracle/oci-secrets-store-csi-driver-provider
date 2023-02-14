@@ -10,10 +10,10 @@
 provider:
   # Provider image settings
   image:
-    repository: oci-secrets-store-csi-driver-provider
+    repository: ghcr.io/oracle-samples/oci-secrets-store-csi-driver-provider
     pullPolicy: IfNotPresent
     # Overrides the image tag whose default is the chart appVersion.
-    tag: ""
+    tag: "040bdb24d986f208b8a773c8be5845d3c33b56d2"
 
   # Provider container resources
   resources:

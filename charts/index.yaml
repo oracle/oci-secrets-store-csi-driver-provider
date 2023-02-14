@@ -14,6 +14,6 @@ entries:
     - name: OKE Foundations team
     name: oci-secrets-store-csi-driver-provider
     urls:
-    - https://oracle-samples.github.io/oci-secrets-store-csi-driver-provider/oci-secrets-store-csi-driver-provider-0.2.5.tgz
+    - https://oracle-samples.github.io/oci-secrets-store-csi-driver-provider/charts/oci-secrets-store-csi-driver-provider-0.2.5.tgz
     version: 0.2.5
 generated: "2023-02-14T23:05:21.102932+05:30"

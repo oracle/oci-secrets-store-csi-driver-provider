@@ -45,11 +45,8 @@ spec:
               memory: 100Mi
           # Container should run as root to mount the hostPath volume and create Unix Domain Socket in that volume.
           securityContext:
-<<<<<<< HEAD
             seccompProfile:
               type: RuntimeDefault
-=======
->>>>>>> f4d5b84ba419ef09bb02f117901ac96285f2ffb5
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
             runAsUser: 0
@@ -57,11 +54,7 @@ spec:
               drop:
                 - ALL
           volumeMounts:
-<<<<<<< HEAD
             - mountPath: "/opt/provider/sockets"
-=======
-            - mountPath: "/tmp"
->>>>>>> f4d5b84ba419ef09bb02f117901ac96285f2ffb5
               name: socket-volume
       volumes:
         - name: socket-volume

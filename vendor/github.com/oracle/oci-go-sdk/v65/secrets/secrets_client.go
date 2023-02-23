@@ -17,8 +17,6 @@ import (
 	"net/http"
 )
 
-const API_BASE_PATH = "20190301"
-
 //SecretsClient a client for Secrets
 type SecretsClient struct {
 	common.BaseClient
@@ -58,7 +56,7 @@ func newSecretsClientFromBaseClient(baseClient common.BaseClient, configProvider
 	common.ConfigCircuitBreakerFromGlobalVar(&baseClient)
 
 	client = SecretsClient{BaseClient: baseClient}
-	client.BasePath = API_BASE_PATH
+	client.BasePath = "20190301"
 	err = client.setConfigurationProvider(configProvider)
 	return
 }

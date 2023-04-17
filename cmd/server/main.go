@@ -58,6 +58,7 @@ import (
 	"github.com/oracle-samples/oci-secrets-store-csi-driver-provider/internal/network"
 	"github.com/oracle-samples/oci-secrets-store-csi-driver-provider/internal/server"
 	"github.com/oracle-samples/oci-secrets-store-csi-driver-provider/internal/utils"
+	"github.com/oracle/oci-go-sdk/v65/common"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc"
@@ -81,6 +82,7 @@ var (
 )
 
 func init() {
+	common.EnableInstanceMetadataServiceLookup()
 	logging.ConfigureGlobalLogger()
 	flag.Parse()
 }

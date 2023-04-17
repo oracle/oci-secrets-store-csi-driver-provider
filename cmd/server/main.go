@@ -79,10 +79,10 @@ var (
 	metricsPort         = flag.Int("metrics-port", 8198, "Metrics port for metrics backend")
 	enableProfile       = flag.Bool("enable-pprof", true, "enable pprof profiling")
 	pprofPort           = flag.Int("pprof-port", 6060, "port for pprof profiling")
-	enableIMDSLookup    = flag.Bool("enable-imds-lookup", false, "enable pprof profiling")
 )
 
 func init() {
+	common.EnableInstanceMetadataServiceLookup()
 	logging.ConfigureGlobalLogger()
 	flag.Parse()
 }
@@ -92,10 +92,6 @@ func main() {
 	exitCode := successCode
 	defer func() { os.Exit(exitCode) }()
 
-	if *enableIMDSLookup {
-		log.Info().Msg("IMDS Lookup is enabled explicitly")
-		common.EnableInstanceMetadataServiceLookup()
-	}
 	// Intercepting signals to shut down gracefully
 	signalChannel := make(chan os.Signal, 1)
 	signal.Notify(signalChannel, syscall.SIGTERM, syscall.SIGINT, os.Interrupt)

@@ -48,7 +48,6 @@ provider:
   # Profiling
   enableProfile: true
   profilingPort: 6060
-  enableIMDSLookup: false
 
 
   # Host directory with sockets for various providers.

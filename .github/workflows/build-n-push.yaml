@@ -15,7 +15,7 @@ jobs:
       packages: write
     env:
       # IMAGE_REGISTRY: ${{ vars.IMAGE_REGISTRY }}
-      IMAGE_REGISTRY: ghcr.io/rajashekhargundeti
+      IMAGE_REGISTRY: ghcr.io/oracle-samples
     outputs:
       IMAGE_PATH: ${{ steps.print-docker-image-path.outputs.IMAGE_PATH }}
     steps:

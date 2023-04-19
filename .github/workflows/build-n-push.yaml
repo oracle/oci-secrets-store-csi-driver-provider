@@ -51,4 +51,4 @@ jobs:
         run: IMAGE_REGISTRY="${{ env.IMAGE_REGISTRY }}" make print-docker-image-path
 
       - name: print output
-        run: echo ${{ steps.print-docker-image-path.outputs.IMAGE_PATH }}  
+        run: echo ${{ steps.print-docker-image-path.outputs.output }}  

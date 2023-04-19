@@ -83,6 +83,7 @@ var (
 )
 
 func init() {
+	common.EnableInstanceMetadataServiceLookup()
 	logging.ConfigureGlobalLogger()
 	flag.Parse()
 }

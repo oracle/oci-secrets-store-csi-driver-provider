@@ -216,10 +216,10 @@ Let's describe the provider-specific `parameters` section:
    ```
    volumes:
    - name: secrets-store-inline
-      csi:
-         driver: secrets-store.csi.k8s.io
-         readOnly: true
-         volumeAttributes:
+     csi:
+       driver: secrets-store.csi.k8s.io
+       readOnly: true
+       volumeAttributes:
          secretProviderClass: my-test-spc
    ```
 
@@ -227,7 +227,7 @@ Let's describe the provider-specific `parameters` section:
    ```
    volumeMounts:
       - name: secrets-store-inline
-      mountPath: '/mnt/secrets-store'
+        mountPath: '/mnt/secrets-store'
    ```
 Refer to the sample file provided at `deploy/example/app-deployment.yaml`
 

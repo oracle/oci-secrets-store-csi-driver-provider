@@ -2,7 +2,11 @@ name: BuildnPush
 
 on:
   push: {}
-  workflow_call: 
+  workflow_call:
+    inputs:
+      IMAGE_REGISTRY:
+        required: true
+        type: string 
     outputs:
       IMAGE_PATH:
         description: "Image Path"
@@ -15,7 +19,7 @@ jobs:
     permissions:
       packages: write
     env:
-      IMAGE_REGISTRY: ${{ vars.IMAGE_REGISTRY }}
+      IMAGE_REGISTRY: ${{ inputs.IMAGE_REGISTRY }}
       # IMAGE_REGISTRY: ghcr.io/oracle-samples
     outputs:
       IMAGE_PATH: ${{ steps.print-docker-image-path.outputs.IMAGE_PATH }}

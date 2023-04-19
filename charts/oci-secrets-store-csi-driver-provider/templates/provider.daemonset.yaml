@@ -37,7 +37,6 @@ spec:
             - --metrics-backend={{ .Values.provider.metricsBackend }}
             - --enable-pprof={{ .Values.provider.enableProfile }}
             - --pprof-port={{ .Values.provider.profilingPort }}
-            - --enable-imds-lookup={{ .Values.provider.enableIMDSLookup }}
           ports:
             - containerPort: {{ .Values.provider.healthzPort }}
               name: health-port

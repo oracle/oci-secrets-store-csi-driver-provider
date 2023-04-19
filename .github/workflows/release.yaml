@@ -8,27 +8,35 @@ on:
 
 jobs:
   build:
+    uses: ./.github/workflows/build-n-push.yaml
+  publish:
     runs-on: ubuntu-latest
+    needs: ["build"]
     env:
-      IMAGE_REGISTRY: ${{ vars.IMAGE_REGISTRY }}
+      IMAGE_PATH : ${{ needs.build.outputs.IMAGE_PATH }}
     steps:
 
-      - name: Checkout
-        uses: actions/checkout@v3.3.0
+      # - name: Checkout
+      #   uses: actions/checkout@v3.3.0
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
-        with:
-          platforms: amd64  
+      # - name: Set up QEMU
+      #   uses: docker/setup-qemu-action@v2
+      #   with:
+      #     platforms: amd64  
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+      # - name: Set up Docker Buildx
+      #   uses: docker/setup-buildx-action@v2
 
       - name: Log into GitHub Container Registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${GITHUB_ACTOR,,} --password-stdin
 
-      - name: Build Image
-        run: IMAGE_REGISTRY="${{ env.IMAGE_REGISTRY }}" make docker-build
-
-      - name: Push Image
-        run: IMAGE_REGISTRY="${{ env.IMAGE_REGISTRY }}" make docker-push
+      - name: tag Image with release name
+        id: tag-image-with-release-name
+        run: |
+          echo IMAGE_NEW_PATH=`echo "${{ env.IMAGE_PATH }}" | sed -e "s/:.*$/${{ github.ref }}"` >> $GITHUB_OUTPUT
+          
+      - name: tag Image with release name
+        run: |
+          echo ${{ steps.tag-image-with-release-name.outputs.IMAGE_NEW_PATH}}
+          docker tag "${{ env.IMAGE_PATH }}" ${{ steps.tag-image-with-release-name.outputs.IMAGE_NEW_PATH}}
+          docker push ${{ steps.tag-image-with-release-name.outputs.IMAGE_NEW_PATH}}

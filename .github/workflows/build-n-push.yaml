@@ -16,8 +16,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     # permissions: write-all
-    permissions:
-      packages: write
+    # permissions:
+    #   packages: write
     env:
       IMAGE_REGISTRY: ${{ inputs.IMAGE_REGISTRY }}
       # IMAGE_REGISTRY: ghcr.io/oracle-samples

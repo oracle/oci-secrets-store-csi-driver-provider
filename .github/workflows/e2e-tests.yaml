@@ -1,7 +1,7 @@
 name: E2E Tests
 
 on: 
-  # pull_request: {}
+  pull_request: {}
   push:
     # Build and publish artifacts for a release
     tags:
@@ -48,7 +48,7 @@ jobs:
         id: create-vault
         with:
           silent: false
-          command: "kms management vault create --compartment-id ${{ vars.COMPARTMENT_ID }} --display-name ${{ vars.VAULT_NAME_PREFIX }}-${RANDOM} --vault-type default"
+          command: "kms management vault create --compartment-id ${{ vars.COMPARTMENT_ID }} --display-name ${{ vars.VAULT_NAME_PREFIX }}-${{ env.OCI_RANDOM }} --vault-type default"
           query: "data.id"
       
       - name: get vault from previous output

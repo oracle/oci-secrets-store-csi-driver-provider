@@ -1,6 +1,7 @@
 name: BuildnPush
 
 on:
+  push: {}
   workflow_call: 
     outputs:
       IMAGE_PATH:

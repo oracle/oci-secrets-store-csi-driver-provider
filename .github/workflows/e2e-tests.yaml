@@ -1,8 +1,11 @@
 name: E2E Tests
 
 on: 
-  pull_request: {}
-
+  # pull_request: {}
+  push:
+    # Build and publish artifacts for a release
+    tags:
+      - "vT*.*.*"
 concurrency: dev_environment
 
 env:

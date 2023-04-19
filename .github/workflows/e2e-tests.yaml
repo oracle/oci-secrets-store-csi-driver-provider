@@ -143,8 +143,8 @@ jobs:
         continue-on-error: true
         run: kubectl create namespace ${{ env.PROVIDER_NAMESPACE }}
       
-      - name: Install Helm
-        uses: azure/setup-helm@v3
+      # - name: Install Helm
+      #   uses: azure/setup-helm@v3
 
       - name: Checkout
         uses: actions/checkout@v3

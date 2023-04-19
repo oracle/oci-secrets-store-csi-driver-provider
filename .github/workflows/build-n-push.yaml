@@ -47,7 +47,8 @@ jobs:
 
       - name: Print Image Path
         id: print-docker-image-path
-        run: echo IMAGE_PATH=`IMAGE_REGISTRY="${{ env.IMAGE_REGISTRY }}" make print-docker-image-path` >> $GITHUB_OUTPUT
+        # run: echo IMAGE_PATH=`IMAGE_REGISTRY="${{ env.IMAGE_REGISTRY }}" make print-docker-image-path` >> $GITHUB_OUTPUT
+        run: IMAGE_REGISTRY="${{ env.IMAGE_REGISTRY }}" make print-docker-image-path
 
       - name: print output
         run: echo ${{ steps.print-docker-image-path.outputs.IMAGE_PATH }}  

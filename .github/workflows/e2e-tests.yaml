@@ -19,8 +19,8 @@ env:
   OCI_CLI_KEY_CONTENT: ${{ secrets.OCI_CLI_KEY_CONTENT }}
   OCI_CLI_REGION: ${{ secrets.OCI_CLI_REGION }}
   
-  # OCI_CLUSTER_ID: ${{ secrets.CLUSTER_ID }}
-  # OCI_VAULT_ID: ${{ secrets.VAULT_ID }}
+  # OCI_CLUSTER_ID: ${{ vars.CLUSTER_ID }}
+  # OCI_VAULT_ID: ${{ vars.VAULT_ID }}
   OCI_VAULT_SECRET_VALUE: ${{ vars.VAULT_SECRET_VALUE }}
 #   OCI_DEBUG: "--debug"
 
@@ -35,9 +35,8 @@ jobs:
     name: Setup Vault and secrets
     needs: [ build ]
     env:
-      OCI_VAULT_ID: ${{ secrets.VAULT_ID }}
-      OCI_VAULT_KEY_ID: ${{ secrets.VAULT_KEY_ID }}
-      COMPARTMENT_ID: ${{ secrets.COMPARTMENT_ID }}
+      OCI_VAULT_ID: ${{ vars.VAULT_ID }}
+      OCI_VAULT_KEY_ID: ${{ vars.VAULT_KEY_ID }}
     outputs:
       OCI_VAULT_ID: ${{ env.OCI_VAULT_ID }}
       OCI_VAULT_KEY_ID: ${{ env.OCI_VAULT_KEY_ID }}
@@ -54,7 +53,7 @@ jobs:
         id: create-vault
         with:
           silent: false
-          command: "kms management vault create --compartment-id ${{ env.COMPARTMENT_ID }} --display-name ${{ vars.VAULT_NAME_PREFIX }}-${{ env.OCI_RANDOM }} --vault-type default"
+          command: "kms management vault create --compartment-id ${{ vars.COMPARTMENT_ID }} --display-name ${{ vars.VAULT_NAME_PREFIX }}-${{ env.OCI_RANDOM }} --vault-type default"
           query: "data.id"
       
       - name: get vault from previous output
@@ -67,7 +66,7 @@ jobs:
         id: create-vault-key
         with:
           silent: false
-          command: "kms management key create --endpoint ${{ vars.VAULT_MGMT_ENDPOINT }} --compartment-id ${{ env.COMPARTMENT_ID }}  --display-name key-${RANDOM} --key-shape '{ \"algorithm\" : \"AES\", \"length\" : 32 }'"
+          command: "kms management key create --endpoint ${{ vars.VAULT_MGMT_ENDPOINT }} --compartment-id ${{ vars.COMPARTMENT_ID }}  --display-name key-${RANDOM} --key-shape '{ \"algorithm\" : \"AES\", \"length\" : 32 }'"
           query: "data.id"
 
       - name: create env for key id from create-vault-key output
@@ -79,7 +78,7 @@ jobs:
         id: create-secret
         with:
           silent: false
-          command: vault secret create-base64 --compartment-id ${{ env.COMPARTMENT_ID }} --vault-id ${{ env.OCI_VAULT_ID }} --key-id ${{ env.OCI_VAULT_KEY_ID }} --secret-name ${{ vars.SECRET_NAME_PREFIX }}-${{ env.OCI_RANDOM }} --secret-content-content ${{ env.OCI_VAULT_SECRET_VALUE }}"
+          command: vault secret create-base64 --compartment-id ${{ vars.COMPARTMENT_ID }} --vault-id ${{ env.OCI_VAULT_ID }} --key-id ${{ env.OCI_VAULT_KEY_ID }} --secret-name ${{ vars.SECRET_NAME_PREFIX }}-${{ env.OCI_RANDOM }} --secret-content-content ${{ env.OCI_VAULT_SECRET_VALUE }}"
 #           query: "data.id"
       
       - name: extract secret id
@@ -91,7 +90,7 @@ jobs:
     name: Setup Cluster
     needs: [ build ]
     env:
-      OCI_CLUSTER_ID: ${{ secrets.CLUSTER_ID }}
+      OCI_CLUSTER_ID: ${{ vars.CLUSTER_ID }}
     outputs:
       OCI_CLUSTER_ID: ${{ steps.print-cluster-id.outputs.clusterId }}
     steps:
@@ -103,8 +102,8 @@ jobs:
       #   id: create-cluster
       #   with:
       #     silent: false
-      #     command: "ce cluster create --compartment-id ${{ env.COMPARTMENT_ID }} 
-      #     --vcn-id ${{ secrets.VCN_ID }} --kubernetes-version ${{ vars.K8S_VERSION }} 
+      #     command: "ce cluster create --compartment-id ${{ vars.COMPARTMENT_ID }} 
+      #     --vcn-id ${{ vars.VCN_ID }} --kubernetes-version ${{ vars.K8S_VERSION }} 
       #     --wait-for-state succeeded"
       #     query: "data.secret-name"
 
@@ -286,7 +285,7 @@ jobs:
       #   id: get-secret-ocid
       #   uses: oracle-actions/run-oci-cli-command@v1.1
       #   with:
-      #     command: "vault secret list --name ${{ env.OCI_VAULT_SECRET_NAME }} --compartment-id ${{ env.COMPARTMENT_ID }}"
+      #     command: "vault secret list --name ${{ env.OCI_VAULT_SECRET_NAME }} --compartment-id ${{ vars.COMPARTMENT_ID }}"
       #     query: data[0].id
 
       - name: delete secrets

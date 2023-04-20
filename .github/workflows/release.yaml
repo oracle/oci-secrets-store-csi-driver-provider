@@ -40,7 +40,7 @@ jobs:
           
       - name: tag Image with release name
         run: |
-          # echo ${{ steps.tag-image-with-release-name.outputs.IMAGE_NEW_PATH}}
+          docker pull ${{ env.IMAGE_PATH }}
           docker tag ${{ env.IMAGE_PATH }} ${{ steps.tag-image-with-release-name.outputs.IMAGE_NEW_PATH}}
           docker push ${{ steps.tag-image-with-release-name.outputs.IMAGE_NEW_PATH}}
 

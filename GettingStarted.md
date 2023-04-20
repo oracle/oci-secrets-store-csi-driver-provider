@@ -28,6 +28,7 @@ The provider is a gRPC server accessible via the Unix domain socket. It's interf
       * [How to introduce new modules or upgrade existing ones?](#dep-management-vendoring)
    * [Versioning](#versioning)
    * [Linter](#linter)
+   * [CI Setup](#ci-setup)
 * [Known Issues](#known-issues)
 * [FAQ](#faq)
 
@@ -353,6 +354,57 @@ Here is the tool's [documentation](https://golangci-lint.run/).
 
 Since this tool is standalone, the developers have to control the version themselves.
 > **_NOTE:_** Current version is 1.46.2
+
+<a name="ci-setup"></a>
+## CI Setup
+GitHub Actions is used to implement Continuous integration pipeline.
+Location in the code base: .github/workflows
+Github workflows: 
+1. unit-tests.yaml – Runs unit test cases
+  * Functionality: 
+     * builds binary 
+     * run unit tests and test coverage reports 
+     * send report to coveralls
+     
+  * triggers: 
+     * On pushing a commit
+  * dependencies:
+     * None
+2.	build-n-push.yaml – builds and pushes to image registry
+  * Functionality: 
+     * builds docker image 
+     * pushes to registry
+  * triggers:
+     * on workflow_call from e2e tests and release workflows
+  * dependencies:
+     * unit-tests.yaml
+3. e2e-tests.yaml – Runs end to end test cases
+  * Functionality: 
+     * Creates cluster
+     * Creates Vault and Secrets
+     * Deploys the provider and sample workload
+     * Tests mounted contents with in a workload pod
+     * Cleans up created resources
+  * triggers:
+     * on pull request
+  * dependencies:
+     * unit-tests.yaml
+     * build-n-push.yaml
+  * flow: 
+  <img width="1460" alt="E2E Pipeline" src="https://user-images.githubusercontent.com/11814052/233365478-520a29f9-e241-41ae-88d1-8949b8560210.png">  
+
+4. release.yaml – Release
+  * Functionality: 
+     * Tags the docker image with release version
+     * Releases helm charts
+  * triggers:
+     * on creating a release tag
+  * dependencies:
+     * unit-tests.yaml
+     * build-n-push.yaml
+  * flow: 
+  <img width="1455" alt="Release Pipeline" src="https://user-images.githubusercontent.com/11814052/233365444-ac2d7852-6905-47dd-ae82-265a2ae3ad9b.png">
+
 
 <a name="known-issues"></a>
 ## Known Issues

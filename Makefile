@@ -56,7 +56,7 @@ docker-build-push: docker-build
 	docker push ${IMAGE_PATH}
 
 print-docker-image-path:
-	echo ${IMAGE_PATH}
+	@echo ${IMAGE_PATH}
 
 test-coverage:
 	go test -coverprofile=cover.out ./…

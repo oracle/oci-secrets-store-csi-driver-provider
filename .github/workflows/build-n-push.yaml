@@ -10,7 +10,7 @@ on:
     outputs:
       IMAGE_PATH:
         description: "Image Path"
-        value: ${{ jobs.build.outputs.IMAGE_PATH }}
+        value: ${{ jobs.image-build-n-push.outputs.IMAGE_PATH }}
 
 jobs:
   unit-tests:

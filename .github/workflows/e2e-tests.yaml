@@ -246,15 +246,18 @@ jobs:
         run: if [ "${{ env.SECRET_CONTENT }}" == "${{ env.OCI_VAULT_SECRET_VALUE}}" ]; then exit 0; else exit 1; fi
 
       # cleanup
-      - name: remove deployment 
+      - name: remove deployment
+        if: ${{ always() }} 
         run: |
           kubectl delete -f e2e/example/app.deployment.yaml.tmp \
             -f e2e/example/secret-provider-class.yaml.tmp
 
-      - name: delete secret 
+      - name: delete secret
+        if: ${{ always() }} 
         run: kubectl delete secret oci-config
       
       - name: uninstall provider
+        if: ${{ always() }}
         run: helm uninstall oci-provider -n ${{ env.PROVIDER_NAMESPACE }}
 
   cleanup:

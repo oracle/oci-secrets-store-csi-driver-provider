@@ -2,6 +2,10 @@ name: E2E Tests
 
 on: 
   pull_request: {}
+  workflow_run:
+    workflows: ["BuildnPush"]
+    types:
+      - completed
   push:
     # Build and publish artifacts for a release
     tags:

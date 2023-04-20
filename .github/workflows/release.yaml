@@ -19,8 +19,8 @@ jobs:
       IMAGE_PATH : ${{ needs.build.outputs.IMAGE_PATH }}
     steps:
 
-      # - name: Checkout
-      #   uses: actions/checkout@v3.3.0
+      - name: Checkout
+        uses: actions/checkout@v3.3.0
 
       # - name: Set up QEMU
       #   uses: docker/setup-qemu-action@v2

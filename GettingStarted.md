@@ -354,6 +354,52 @@ Here is the tool's [documentation](https://golangci-lint.run/).
 Since this tool is standalone, the developers have to control the version themselves.
 > **_NOTE:_** Current version is 1.46.2
 
+<a name="CI Setup"></a>
+## CI Setup
+GitHub Actions is used to implement Continuous integration pipeline.
+Location in the code base: .github/workflows
+Github workflows: 
+-	unit-tests.yaml – Runs unit test cases
+o	Functionality: 
+	builds binary 
+	run unit tests and test coverage reports 
+	send report to coveralls
+o	triggers: 
+	On pushing a commit
+o	dependencies:
+	None
+-	build-n-push.yaml – builds and pushes to image registry
+o	Functionality: 
+	builds docker image 
+	pushes to registry
+o	triggers:
+	on workflow_call from e2e tests and release workflows
+o	dependencies:
+	unit-tests.yaml
+-	e2e-tests.yaml – Runs end to end test cases
+o	Functionality: 
+	Creates cluster
+	Creates Vault and Secrets
+	Deploys the provider and sample workload
+	Tests mounted contents with in a workload pod
+	Cleans up created resources
+o	triggers:
+	on pull request
+o	dependencies:
+	unit-tests.yaml
+	build-n-push.yaml
+-	release.yaml – Release
+o	Functionality: 
+	Tags the docker image with release version
+	Releases helm charts
+o	triggers:
+	on creating a release tag
+o	dependencies:
+	unit-tests.yaml
+	build-n-push.yaml
+o	
+
+
 <a name="known-issues"></a>
 ## Known Issues
 

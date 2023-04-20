@@ -19,14 +19,6 @@ jobs:
       IMAGE_PATH : ${{ needs.build.outputs.IMAGE_PATH }}
     steps:
 
-      - name: Checkout
-        uses: actions/checkout@v3.3.0
-
-      - name: Configure Git
-        run: |
-          git config user.name "$GITHUB_ACTOR"
-          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
-
       - name: Log into GitHub Container Registry
         run: echo "${{ secrets.CR_PAT }}" | docker login ghcr.io -u ${GITHUB_ACTOR,,} --password-stdin
 
@@ -35,20 +27,22 @@ jobs:
         run: |
           echo PROVIDER_IMAGE_REPO=`echo ${{ env.IMAGE_PATH }} | sed -e "s/:.*$//"` >> $GITHUB_ENV
           echo PROVIDER_IMAGE_NEW_TAG=${{ github.ref_name }} >> $GITHUB_ENV
-          # echo IMAGE_NEW_PATH=${{ env.PROVIDER_IMAGE_REPO }}:${{ env.PROVIDER_IMAGE_NEW_TAG }} >> $GITHUB_ENV
-
-      # - name: prepare final image name
-      #   id: tag-image-with-release-name
-      #   run: |
-      #     echo IMAGE_NEW_PATH=`echo "${{ env.IMAGE_PATH }}" | sed -e "s/:.*$/:${{ github.ref_name }}/"` >> $GITHUB_OUTPUT
           
       - name: tag Image with release name
         run: |
           docker pull ${{ env.IMAGE_PATH }}
-          # docker tag ${{ env.IMAGE_PATH }} ${{ steps.tag-image-with-release-name.outputs.IMAGE_NEW_PATH}}
           docker tag ${{ env.IMAGE_PATH }} ${{ env.PROVIDER_IMAGE_REPO }}:${{ env.PROVIDER_IMAGE_NEW_TAG }}
           docker push ${{ env.PROVIDER_IMAGE_REPO }}:${{ env.PROVIDER_IMAGE_NEW_TAG }}
 
+      - name: Checkout
+        uses: actions/checkout@v3.3.0
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.name "$GITHUB_ACTOR"
+          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
 
       - name: helm release
         run: |

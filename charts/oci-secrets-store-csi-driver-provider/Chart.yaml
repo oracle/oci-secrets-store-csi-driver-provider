@@ -7,10 +7,10 @@
 apiVersion: v2
 name: oci-secrets-store-csi-driver-provider
 description: OCI Vault provider for the Secrets Store CSI driver.
-version: 0.2.7
+version: 0.2.8
 type: application
 
-appVersion: "0.9.3"
+appVersion: "0.9.4"
 kubeVersion: ">=1.19.0-0" # CSI Driver 1.2.0 is compatible with K8S 1.19+
 
 dependencies:

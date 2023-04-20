@@ -12,7 +12,7 @@ jobs:
     with: 
       IMAGE_REGISTRY: ${{ vars.IMAGE_REGISTRY }}
     secrets: inherit
-  publish:
+  image-publish:
     runs-on: ubuntu-latest
     needs: ["build"]
     env:
@@ -36,10 +36,21 @@ jobs:
       - name: tag Image with release name
         id: tag-image-with-release-name
         run: |
-          echo IMAGE_NEW_PATH=`echo "${{ env.IMAGE_PATH }}" | sed -e "s/:.*$/${{ github.ref }}"` >> $GITHUB_OUTPUT
+          echo IMAGE_NEW_PATH=`echo "${{ env.IMAGE_PATH }}" | sed -e "s/:.*$/${{ github.ref_name }}"` >> $GITHUB_OUTPUT
           
       - name: tag Image with release name
         run: |
           # echo ${{ steps.tag-image-with-release-name.outputs.IMAGE_NEW_PATH}}
-          docker tag "${{ env.IMAGE_PATH }}" ${{ steps.tag-image-with-release-name.outputs.IMAGE_NEW_PATH}}
+          docker tag ${{ env.IMAGE_PATH }} ${{ steps.tag-image-with-release-name.outputs.IMAGE_NEW_PATH}}
           docker push ${{ steps.tag-image-with-release-name.outputs.IMAGE_NEW_PATH}}
+
+      - name: Helm package
+        run: helm package charts/oci-secrets-store-csi-driver-provider -d charts
+
+      - name: Run chart-releaser
+        uses: helm/chart-releaser-action@v1.5.0
+        with:
+          charts_dir: charts/oci-secrets-store-csi-driver-provider
+          skip_packaging: true
+        env:
+          CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"

@@ -7,8 +7,8 @@ on:
     branches-ignore:
       - gh-pages
 jobs:
-  build:
-    name: Build
+  build-binary-n-test:
+    name: Build Binary locally and run unit tests
     runs-on: ubuntu-latest
     steps:
 

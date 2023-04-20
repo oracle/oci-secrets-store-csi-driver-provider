@@ -1,10 +1,11 @@
 name: Release Charts
 
 on:
-  push:
-    # Build and publish artifacts for a release
-    tags:
-      - "vx*.*.*"
+  workflow_call: {}
+  # push:
+  #   # Build and publish artifacts for a release
+  #   tags:
+  #     - "vx*.*.*"
 
 jobs:
   release-chart:
@@ -19,10 +20,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Configure Git
-        run: |
-          git config user.name "$GITHUB_ACTOR"
-          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+      # - name: Configure Git
+      #   run: |
+      #     git config user.name "$GITHUB_ACTOR"
+      #     git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
 
       - name: Helm package
         run: helm package charts/oci-secrets-store-csi-driver-provider -d charts

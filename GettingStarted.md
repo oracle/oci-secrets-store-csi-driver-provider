@@ -390,6 +390,9 @@ Github workflows:
   * dependencies:
      * unit-tests.yaml
      * build-n-push.yaml
+  * flow: 
+  <img width="1460" alt="E2E Pipeline" src="https://user-images.githubusercontent.com/11814052/233365478-520a29f9-e241-41ae-88d1-8949b8560210.png">  
+
 4. release.yaml – Release
   * Functionality: 
      * Tags the docker image with release version
@@ -399,6 +402,8 @@ Github workflows:
   * dependencies:
      * unit-tests.yaml
      * build-n-push.yaml
+  * flow: 
+  <img width="1455" alt="Release Pipeline" src="https://user-images.githubusercontent.com/11814052/233365444-ac2d7852-6905-47dd-ae82-265a2ae3ad9b.png">
 
 
 <a name="known-issues"></a>

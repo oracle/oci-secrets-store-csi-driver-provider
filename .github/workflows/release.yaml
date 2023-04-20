@@ -8,27 +8,51 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
-    env:
+    uses: ./.github/workflows/build-n-push.yaml
+    with: 
       IMAGE_REGISTRY: ${{ vars.IMAGE_REGISTRY }}
+    secrets: inherit
+  image-publish:
+    runs-on: ubuntu-latest
+    needs: ["build"]
+    env:
+      IMAGE_PATH : ${{ needs.build.outputs.IMAGE_PATH }}
     steps:
-
-      - name: Checkout
-        uses: actions/checkout@v3.3.0
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
-        with:
-          platforms: amd64  
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
 
       - name: Log into GitHub Container Registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${GITHUB_ACTOR,,} --password-stdin
 
-      - name: Build Image
-        run: IMAGE_REGISTRY="${{ env.IMAGE_REGISTRY }}" make docker-build
+      - name: split image path into repo and tag
+        id: split-image-path
+        run: |
+          echo PROVIDER_IMAGE_REPO=`echo ${{ env.IMAGE_PATH }} | sed -e "s/:.*$//"` >> $GITHUB_ENV
+          echo PROVIDER_IMAGE_NEW_TAG=${{ github.ref_name }} >> $GITHUB_ENV
+          
+      - name: tag Image with release name
+        run: |
+          docker pull ${{ env.IMAGE_PATH }}
+          docker tag ${{ env.IMAGE_PATH }} ${{ env.PROVIDER_IMAGE_REPO }}:${{ env.PROVIDER_IMAGE_NEW_TAG }}
+          docker push ${{ env.PROVIDER_IMAGE_REPO }}:${{ env.PROVIDER_IMAGE_NEW_TAG }}
 
-      - name: Push Image
-        run: IMAGE_REGISTRY="${{ env.IMAGE_REGISTRY }}" make docker-push
+      - name: Checkout
+        uses: actions/checkout@v3.3.0
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.name "$GITHUB_ACTOR"
+          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+
+      - name: helm release
+        run: |
+          git checkout gh-pages
+          git checkout origin/main charts
+          sed -i -e 's|repository:.*|repository: ${{ env.PROVIDER_IMAGE_REPO }}|' \
+          -e 's|tag:.*|tag: ${{ env.PROVIDER_IMAGE_NEW_TAG }}|' \
+          charts/oci-secrets-store-csi-driver-provider/values.yaml 
+          helm package charts/oci-secrets-store-csi-driver-provider -d charts
+          helm repo index --url https://${GITHUB_ACTOR,,}.github.io/oci-secrets-store-csi-driver-provider/charts --merge charts/index.yaml charts
+          git add charts
+          git commit -m "Releasing chart version: ${{ github.ref_name }}"
+          git push -u origin gh-pages

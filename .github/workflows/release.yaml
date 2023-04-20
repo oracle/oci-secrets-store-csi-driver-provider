@@ -22,35 +22,43 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3.3.0
 
-      # - name: Set up QEMU
-      #   uses: docker/setup-qemu-action@v2
-      #   with:
-      #     platforms: amd64  
-
-      # - name: Set up Docker Buildx
-      #   uses: docker/setup-buildx-action@v2
+      - name: Configure Git
+        run: |
+          git config user.name "$GITHUB_ACTOR"
+          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
 
       - name: Log into GitHub Container Registry
         run: echo "${{ secrets.CR_PAT }}" | docker login ghcr.io -u ${GITHUB_ACTOR,,} --password-stdin
 
-      - name: prepare final image name
-        id: tag-image-with-release-name
+      - name: split image path into repo and tag
+        id: split-image-path
         run: |
-          echo IMAGE_NEW_PATH=`echo "${{ env.IMAGE_PATH }}" | sed -e "s/:.*$/:${{ github.ref_name }}/"` >> $GITHUB_OUTPUT
+          echo PROVIDER_IMAGE_REPO=`echo ${{ env.IMAGE_PATH }} | sed -e "s/:.*$//"` >> $GITHUB_ENV
+          echo PROVIDER_IMAGE_NEW_TAG=${{ github.ref_name }} >> $GITHUB_ENV
+          echo IMAGE_NEW_PATH=${{ env.PROVIDER_IMAGE_REPO }}:${{ env.PROVIDER_IMAGE_NEW_TAG }} >> $GITHUB_ENV
+
+      # - name: prepare final image name
+      #   id: tag-image-with-release-name
+      #   run: |
+      #     echo IMAGE_NEW_PATH=`echo "${{ env.IMAGE_PATH }}" | sed -e "s/:.*$/:${{ github.ref_name }}/"` >> $GITHUB_OUTPUT
           
       - name: tag Image with release name
         run: |
           docker pull ${{ env.IMAGE_PATH }}
-          docker tag ${{ env.IMAGE_PATH }} ${{ steps.tag-image-with-release-name.outputs.IMAGE_NEW_PATH}}
-          docker push ${{ steps.tag-image-with-release-name.outputs.IMAGE_NEW_PATH}}
+          # docker tag ${{ env.IMAGE_PATH }} ${{ steps.tag-image-with-release-name.outputs.IMAGE_NEW_PATH}}
+          docker tag ${{ env.IMAGE_PATH }} ${{ env.IMAGE_NEW_PATH }}
+          docker push ${{ env.IMAGE_NEW_PATH }}
 
-      - name: Helm package
-        run: helm package charts/oci-secrets-store-csi-driver-provider -d charts
 
-      - name: Run chart-releaser
-        uses: helm/chart-releaser-action@v1.5.0
-        with:
-          charts_dir: charts/oci-secrets-store-csi-driver-provider
-          skip_packaging: true
-        env:
-          CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+      - name: helm release
+        run: |
+          git checkout gh-pages
+          git checkout origin/main charts
+          sed -i -e 's|repository:.*|repository: ${{ env.PROVIDER_IMAGE_REPO }}|' \
+          -e 's|tag:.*|tag: ${{ env.PROVIDER_IMAGE_NEW_TAG }}|' \
+          charts/oci-secrets-store-csi-driver-provider/values.yaml 
+          helm package charts/oci-secrets-store-csi-driver-provider -d charts
+          helm repo index --url https://${GITHUB_ACTOR,,}.github.io/oci-secrets-store-csi-driver-provider/charts --merge charts/index.yaml charts
+          git add charts
+          git commit -m "Releasing chart version: ${{ github.ref_name }}"
+          git push -u origin gh-pages

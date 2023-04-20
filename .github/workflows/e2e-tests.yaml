@@ -24,7 +24,7 @@ jobs:
   build:
     uses: ./.github/workflows/build-n-push.yaml
     with: 
-      IMAGE_REGISTRY: ${{ vars.IMAGE_REGISTRY }}
+      IMAGE_REGISTRY: ghcr.io/oracle-samples
     secrets: inherit
   setup-vault:
     runs-on: ubuntu-latest

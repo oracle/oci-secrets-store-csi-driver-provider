@@ -36,7 +36,7 @@ jobs:
       - name: tag Image with release name
         id: tag-image-with-release-name
         run: |
-          echo IMAGE_NEW_PATH=`echo "${{ env.IMAGE_PATH }}" | sed -e "s/:.*$/${{ github.ref_name }}"` >> $GITHUB_OUTPUT
+          echo IMAGE_NEW_PATH=`echo "${{ env.IMAGE_PATH }}" | sed -e "s/:.*$/:${{ github.ref_name }}/"` >> $GITHUB_OUTPUT
           
       - name: tag Image with release name
         run: |

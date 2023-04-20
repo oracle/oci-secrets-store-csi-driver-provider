@@ -24,10 +24,13 @@ jobs:
           git config user.name "$GITHUB_ACTOR"
           git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
 
-      - name: Install Helm
-        uses: azure/setup-helm@v3
+      - name: Helm package
+        run: helm package charts/oci-secrets-store-csi-driver-provider -d charts
 
       - name: Run chart-releaser
         uses: helm/chart-releaser-action@v1.5.0
+        with:
+          charts_dir: charts/oci-secrets-store-csi-driver-provider
+          skip_packaging: true
         env:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"

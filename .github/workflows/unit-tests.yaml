@@ -1,7 +1,6 @@
 name: Unit Tests
 
 on:
-  # pull_request: {}
   workflow_call: {}
   push: 
     branches-ignore:

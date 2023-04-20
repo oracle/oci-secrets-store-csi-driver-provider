@@ -6,10 +6,6 @@ on:
   #   workflows: ["BuildnPush"]
   #   types:
   #     - completed
-  # push:
-  #   # Build and publish artifacts for a release
-  #   tags:
-  #     - "vT*.*.*"
 concurrency: dev_environment
 
 env:

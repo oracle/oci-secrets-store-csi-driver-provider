@@ -1,7 +1,6 @@
 name: BuildnPush
 
 on:
-  # push: {}
   workflow_call:
     inputs:
       IMAGE_REGISTRY:

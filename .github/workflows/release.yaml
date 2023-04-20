@@ -35,7 +35,7 @@ jobs:
         run: |
           echo PROVIDER_IMAGE_REPO=`echo ${{ env.IMAGE_PATH }} | sed -e "s/:.*$//"` >> $GITHUB_ENV
           echo PROVIDER_IMAGE_NEW_TAG=${{ github.ref_name }} >> $GITHUB_ENV
-          echo IMAGE_NEW_PATH=${{ env.PROVIDER_IMAGE_REPO }}:${{ env.PROVIDER_IMAGE_NEW_TAG }} >> $GITHUB_ENV
+          # echo IMAGE_NEW_PATH=${{ env.PROVIDER_IMAGE_REPO }}:${{ env.PROVIDER_IMAGE_NEW_TAG }} >> $GITHUB_ENV
 
       # - name: prepare final image name
       #   id: tag-image-with-release-name
@@ -46,8 +46,8 @@ jobs:
         run: |
           docker pull ${{ env.IMAGE_PATH }}
           # docker tag ${{ env.IMAGE_PATH }} ${{ steps.tag-image-with-release-name.outputs.IMAGE_NEW_PATH}}
-          docker tag ${{ env.IMAGE_PATH }} ${{ env.IMAGE_NEW_PATH }}
-          docker push ${{ env.IMAGE_NEW_PATH }}
+          docker tag ${{ env.IMAGE_PATH }} ${{ env.PROVIDER_IMAGE_REPO }}:${{ env.PROVIDER_IMAGE_NEW_TAG }}
+          docker push ${{ env.PROVIDER_IMAGE_REPO }}:${{ env.PROVIDER_IMAGE_NEW_TAG }}
 
 
       - name: helm release

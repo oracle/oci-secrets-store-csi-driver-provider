@@ -2,14 +2,14 @@ name: E2E Tests
 
 on: 
   pull_request: {}
-  workflow_run:
-    workflows: ["BuildnPush"]
-    types:
-      - completed
-  push:
-    # Build and publish artifacts for a release
-    tags:
-      - "vT*.*.*"
+  # workflow_run:
+  #   workflows: ["BuildnPush"]
+  #   types:
+  #     - completed
+  # push:
+  #   # Build and publish artifacts for a release
+  #   tags:
+  #     - "vT*.*.*"
 concurrency: dev_environment
 
 env:
@@ -33,6 +33,7 @@ jobs:
   setup-vault:
     runs-on: ubuntu-latest
     name: Setup Vault and secrets
+    needs: [ build ]
     env:
       OCI_VAULT_ID: ${{ vars.VAULT_ID }}
       OCI_VAULT_KEY_ID: ${{ vars.VAULT_KEY_ID }}
@@ -87,6 +88,7 @@ jobs:
   setup-cluster:
     runs-on: ubuntu-latest
     name: Setup Cluster
+    needs: [ build ]
     env:
       OCI_CLUSTER_ID: ${{ vars.CLUSTER_ID }}
     outputs:

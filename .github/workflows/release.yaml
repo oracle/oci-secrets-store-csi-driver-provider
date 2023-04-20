@@ -9,6 +9,9 @@ on:
 jobs:
   build:
     uses: ./.github/workflows/build-n-push.yaml
+    with: 
+      IMAGE_REGISTRY: ${{ vars.IMAGE_REGISTRY }}
+    secrets: inherit
   publish:
     runs-on: ubuntu-latest
     needs: ["build"]
@@ -37,6 +40,6 @@ jobs:
           
       - name: tag Image with release name
         run: |
-          echo ${{ steps.tag-image-with-release-name.outputs.IMAGE_NEW_PATH}}
+          # echo ${{ steps.tag-image-with-release-name.outputs.IMAGE_NEW_PATH}}
           docker tag "${{ env.IMAGE_PATH }}" ${{ steps.tag-image-with-release-name.outputs.IMAGE_NEW_PATH}}
           docker push ${{ steps.tag-image-with-release-name.outputs.IMAGE_NEW_PATH}}

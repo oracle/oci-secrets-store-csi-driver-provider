@@ -1,0 +1,292 @@
+name: E2E Tests
+
+on: 
+  pull_request: {}
+  # workflow_run:
+  #   workflows: ["BuildnPush"]
+  #   types:
+  #     - completed
+concurrency: dev_environment
+
+env:
+  OCI_CLI_USER: ${{ secrets.OCI_CLI_USER }}
+  OCI_CLI_TENANCY: ${{ secrets.OCI_CLI_TENANCY }}
+  OCI_CLI_FINGERPRINT: ${{ secrets.OCI_CLI_FINGERPRINT }}
+  OCI_CLI_KEY_CONTENT: ${{ secrets.OCI_CLI_KEY_CONTENT }}
+  OCI_CLI_REGION: ${{ secrets.OCI_CLI_REGION }}
+  
+  # OCI_CLUSTER_ID: ${{ vars.CLUSTER_ID }}
+  # OCI_VAULT_ID: ${{ vars.VAULT_ID }}
+  OCI_VAULT_SECRET_VALUE: ${{ vars.VAULT_SECRET_VALUE }}
+#   OCI_DEBUG: "--debug"
+
+jobs:
+  build:
+    uses: ./.github/workflows/build-n-push.yaml
+    with: 
+      IMAGE_REGISTRY: ${{ vars.IMAGE_REGISTRY }}
+    secrets: inherit
+  setup-vault:
+    runs-on: ubuntu-latest
+    name: Setup Vault and secrets
+    needs: [ build ]
+    env:
+      OCI_VAULT_ID: ${{ vars.VAULT_ID }}
+      OCI_VAULT_KEY_ID: ${{ vars.VAULT_KEY_ID }}
+    outputs:
+      OCI_VAULT_ID: ${{ env.OCI_VAULT_ID }}
+      OCI_VAULT_KEY_ID: ${{ env.OCI_VAULT_KEY_ID }}
+      VAULT_SECRET_NAME: ${{ vars.SECRET_NAME_PREFIX }}-${{ env.OCI_RANDOM }}
+      VAULT_SECRET_OCID: ${{ steps.extract-secret-ocid.outputs.VAULT_SECRET_OCID }}
+    steps: 
+      - name: create env with random
+        id: gen-random
+        run: echo "OCI_RANDOM=${RANDOM}" >> $GITHUB_ENV
+        
+      - name: Create vault if doesn't exist
+        if: ${{ vars.USE_EXISTING_VAULT != 'true' }}
+        uses: oracle-actions/run-oci-cli-command@v1.1
+        id: create-vault
+        with:
+          silent: false
+          command: "kms management vault create --compartment-id ${{ vars.COMPARTMENT_ID }} --display-name ${{ vars.VAULT_NAME_PREFIX }}-${{ env.OCI_RANDOM }} --vault-type default"
+          query: "data.id"
+      
+      - name: get vault from previous output
+        if: ${{ vars.USE_EXISTING_VAULT != 'true' }}
+        run: echo "OCI_VAULT_ID=${{ steps.create-vault.outputs.raw_output }}" >> $GITHUB_ENV
+      
+      - name: create key if doesn't exist
+        if: ${{ vars.USE_EXISTING_VAULT != 'true' }}
+        uses: oracle-actions/run-oci-cli-command@v1.1
+        id: create-vault-key
+        with:
+          silent: false
+          command: "kms management key create --endpoint ${{ vars.VAULT_MGMT_ENDPOINT }} --compartment-id ${{ vars.COMPARTMENT_ID }}  --display-name key-${RANDOM} --key-shape '{ \"algorithm\" : \"AES\", \"length\" : 32 }'"
+          query: "data.id"
+
+      - name: create env for key id from create-vault-key output
+        if: ${{ vars.USE_EXISTING_VAULT != 'true' }}
+        run: echo "OCI_VAULT_KEY_ID=${{ steps.create-vault-key.outputs.raw_output }}" >> $GITHUB_ENV
+
+      - name: create secret in vault
+        uses: oracle-actions/run-oci-cli-command@v1.1
+        id: create-secret
+        with:
+          silent: false
+          command: vault secret create-base64 --compartment-id ${{ vars.COMPARTMENT_ID }} --vault-id ${{ env.OCI_VAULT_ID }} --key-id ${{ env.OCI_VAULT_KEY_ID }} --secret-name ${{ vars.SECRET_NAME_PREFIX }}-${{ env.OCI_RANDOM }} --secret-content-content ${{ env.OCI_VAULT_SECRET_VALUE }}"
+#           query: "data.id"
+      
+      - name: extract secret id
+        id: extract-secret-ocid
+        run: echo VAULT_SECRET_OCID=`echo ${{ steps.create-secret.outputs.output }} | jq -r ".data.id"` >> $GITHUB_OUTPUT
+
+  setup-cluster:
+    runs-on: ubuntu-latest
+    name: Setup Cluster
+    needs: [ build ]
+    env:
+      OCI_CLUSTER_ID: ${{ vars.CLUSTER_ID }}
+    outputs:
+      OCI_CLUSTER_ID: ${{ steps.print-cluster-id.outputs.clusterId }}
+    steps:
+      # - name: create vcn if doesn't exist
+      # - name: get vcn id from previous output or existing var
+      # - name: create cluster
+      #   if: ${{ vars.USE_EXISTING_CLUSTER != 'true' }} 
+      #   uses: oracle-actions/run-oci-cli-command@v1.1
+      #   id: create-cluster
+      #   with:
+      #     silent: false
+      #     command: "ce cluster create --compartment-id ${{ vars.COMPARTMENT_ID }} 
+      #     --vcn-id ${{ vars.VCN_ID }} --kubernetes-version ${{ vars.K8S_VERSION }} 
+      #     --wait-for-state succeeded"
+      #     query: "data.secret-name"
+
+      # - name: create env for key id from create-vault-key output
+      #   if: ${{ vars.USE_EXISTING_CLUSTER != 'true' }}
+      #   run: echo "OCI_CLUSTER_ID=${{ steps.create-cluster.outputs.raw_output }}" >> $GITHUB_ENV
+
+      # - name: create nodepool
+      #   if: ${{ vars.USE_EXISTING_CLUSTER != 'true' }}
+
+      # - name: get kubeconfig
+      #   uses: oracle-actions/run-oci-cli-command@v1.1
+      #   id: get-kube-config
+      #   with:
+      #     silent: false
+      #     command: "ce cluster create-kubeconfig --cluster-id ${{ env.OCI_CLUSTER_ID }} --file $HOME/.kube/config --region ${{ env.OCI_CLI_REGION }} --token-version 2.0.0  --kube-endpoint PUBLIC_ENDPOINT"
+      
+      - name: print cluster id from vars
+        id: print-cluster-id
+        run: echo "clusterId=${{ env.OCI_CLUSTER_ID }}" >> $GITHUB_OUTPUT
+        
+  deploy-provider:
+    runs-on: ubuntu-latest
+    name: Deploy Provider
+    needs: [ setup-vault , setup-cluster , build ]
+    env:
+      OCI_VAULT_ID: ${{ needs.setup-vault.outputs.OCI_VAULT_ID }}
+      OCI_VAULT_SECRET_NAME: ${{ needs.setup-vault.outputs.VAULT_SECRET_NAME }}
+      OCI_VAULT_SECRET_OCID: ${{ needs.setup-vault.outputs.VAULT_SECRET_OCID }}
+      OCI_VAULT_SECRET_OCID_1: ${{ needs.setup-vault.outputs.VAULT_SECRET_OCID_1 }}
+      OCI_CLUSTER_ID: ${{ needs.setup-cluster.outputs.OCI_CLUSTER_ID }}
+      PROVIDER_NAMESPACE: ${{ vars.PROVIDER_NAMESPACE }}
+      IMAGE_PATH : ${{ needs.build.outputs.IMAGE_PATH }}
+    outputs:
+      OCI_VAULT_SECRET_NAME: ${{ needs.setup-vault.outputs.VAULT_SECRET_NAME }}
+      OCI_VAULT_SECRET_OCID: ${{ needs.setup-vault.outputs.VAULT_SECRET_OCID }}
+      OCI_CLUSTER_ID:        ${{ needs.setup-cluster.outputs.OCI_CLUSTER_ID }}
+    steps:
+      - name: Configure Kubectl
+        uses: oracle-actions/configure-kubectl-oke@v1.3.1
+        id: test-configure-kubectl-oke-action
+        with:
+          cluster: ${{ env.OCI_CLUSTER_ID }}
+
+      - name: test cluster access
+        run: kubectl get nodes -A
+        
+      - name: create namespace in the cluster
+        continue-on-error: true
+        run: kubectl create namespace ${{ env.PROVIDER_NAMESPACE }}
+      
+      # - name: Install Helm
+      #   uses: azure/setup-helm@v3
+
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: split image path into repo and tag
+        id: split-image-path
+        run: |
+          echo PROVIDER_IMAGE_REPO=`echo ${{ env.IMAGE_PATH }} | sed -e "s/:.*$//"` >> $GITHUB_OUTPUT
+          echo PROVIDER_IMAGE_TAG=`echo ${{ env.IMAGE_PATH }} | sed -e "s/.*://"` >> $GITHUB_OUTPUT
+      
+      - name: print image values
+        run: |
+          echo ${{ steps.split-image-path.outputs.PROVIDER_IMAGE_REPO }}
+          echo ${{ steps.split-image-path.outputs.PROVIDER_IMAGE_TAG }}    
+
+      - name: Deploy Helm chart
+        run: |
+          helm upgrade --install oci-provider charts/oci-secrets-store-csi-driver-provider \
+            --namespace ${{ env.PROVIDER_NAMESPACE }} \
+            --set "provider.image.repository=${{ steps.split-image-path.outputs.PROVIDER_IMAGE_REPO }},provider.image.tag=${{ steps.split-image-path.outputs.PROVIDER_IMAGE_TAG }}"
+      
+      - name: list pods
+        run: |
+          kubectl get daemonset --namespace oci-provider \
+            --selector='app.kubernetes.io/name in (oci-secrets-store-csi-driver-provider, secrets-store-csi-driver)'
+
+      - name: update auth file with correct values
+        run: | 
+          sed -e 's/region:.*/region: ${{ env.OCI_CLI_REGION }}/' \
+          -e 's/tenancy:.*/tenancy: ${{ env.OCI_CLI_TENANCY }}/' \
+          -e 's/user:.*/user: ${{ env.OCI_CLI_USER }}/' \
+          -e 's/fingerprint:.*/fingerprint: ${{ env.OCI_CLI_FINGERPRINT }}/' e2e/example/user-auth-config-example.yaml > e2e/example/user-auth-config-example.yaml.tmp
+      
+      # - name: print updated yaml file
+      #   run: cat e2e/example/user-auth-config-example.yaml.tmp
+       
+      - name: delete secret if exists
+        continue-on-error: true
+        run: kubectl delete secret oci-config
+
+      - name: create kubernetes secret for user auth config
+        run: |
+          kubectl create secret generic oci-config \
+          --from-file=config=e2e/example/user-auth-config-example.yaml.tmp \
+          --from-literal=private-key="${{ env.OCI_CLI_KEY_CONTENT }}"
+
+      - name: update spc file with correct values
+        run: | 
+          sed -e 's/vaultId:.*/vaultId: ${{ env.OCI_VAULT_ID }}/' \
+          -e 's/authType:.*/authType: user/' \
+          -e 's/- name:.*/- name: ${{ env.OCI_VAULT_SECRET_NAME }}/' e2e/example/secret-provider-class.yaml > e2e/example/secret-provider-class.yaml.tmp
+
+      - name: update deployment file with secret name
+        run: | 
+          sed -e 's/testingSecretName:.*/testingSecretName: ${{ env.OCI_VAULT_SECRET_NAME }}/' \
+            e2e/example/app.deployment.yaml > e2e/example/app.deployment.yaml.tmp
+
+      - name: print updated yaml file
+        run: cat e2e/example/secret-provider-class.yaml.tmp
+
+      - name: deploy spc
+        run: kubectl apply -f e2e/example/secret-provider-class.yaml.tmp 
+
+      - name: deploy workload
+        run: kubectl apply -f e2e/example/app.deployment.yaml.tmp
+
+      - name: Wait for pod to run
+        id: wait-on-pod
+        # run: kubectl wait --for=jsonpath='{.status.phase}'=Running pods/${{ env.POD_NAME }} --timeout=90s
+        run: sleep 90
+
+      - name: Verify pods are running
+        id: pod-names
+        run: kubectl get pods -l testingSecretName=${{ env.OCI_VAULT_SECRET_NAME }} -o='custom-columns=PodName:.metadata.name' --no-headers
+
+      - name: capture pod name into env
+        run: echo "POD_NAME=`kubectl get pods -l testingSecretName=${{ env.OCI_VAULT_SECRET_NAME }} -o='custom-columns=PodName:.metadata.name' --no-headers`" >> $GITHUB_ENV
+
+      - name: print secret value
+        id: print-secret-content
+        run: echo "SECRET_CONTENT=`kubectl exec -it ${{ env.POD_NAME }} -- cat /mnt/secrets-store/${{ env.OCI_VAULT_SECRET_NAME }} 2> /dev/null | base64`" >> $GITHUB_ENV
+
+      # - name: convert to base64
+      #   id: convert-to-base64
+      #   run: echo -n ${{ steps.print-secret-content.outputs.output }} | base64
+
+      - name: print values
+        run: echo "${{ env.SECRET_CONTENT }} == ${{ env.OCI_VAULT_SECRET_VALUE}}"
+
+      - name: verify value
+        run: if [ "${{ env.SECRET_CONTENT }}" == "${{ env.OCI_VAULT_SECRET_VALUE}}" ]; then exit 0; else exit 1; fi
+
+      # cleanup
+      - name: remove deployment
+        if: ${{ always() }} 
+        run: |
+          kubectl delete -f e2e/example/app.deployment.yaml.tmp \
+            -f e2e/example/secret-provider-class.yaml.tmp
+
+      - name: delete secret
+        if: ${{ always() }} 
+        run: kubectl delete secret oci-config
+      
+      - name: uninstall provider
+        if: ${{ always() }}
+        run: helm uninstall oci-provider -n ${{ env.PROVIDER_NAMESPACE }}
+
+  cleanup:
+    runs-on: ubuntu-latest
+    needs: [deploy-provider]
+    name: Cleanup resources
+    env:
+      OCI_VAULT_SECRET_NAME: ${{ needs.deploy-provider.outputs.OCI_VAULT_SECRET_NAME }}
+      OCI_VAULT_SECRET_OCID: ${{ needs.deploy-provider.outputs.OCI_VAULT_SECRET_OCID }}
+      OCI_CLUSTER_ID: ${{ needs.deploy-provider.outputs.OCI_CLUSTER_ID }}
+    steps:
+      - name: delete cluster
+        if: ${{ vars.USE_EXISTING_CLUSTER != 'true' }}
+        uses: oracle-actions/run-oci-cli-command@v1.1
+        with:
+          command: "ce cluster delete --cluster-id ${{ env.OCI_CLUSTER_ID }} --wait-for-state  SUCCEEDED"
+
+      # - name: get secret id
+      #   id: get-secret-ocid
+      #   uses: oracle-actions/run-oci-cli-command@v1.1
+      #   with:
+      #     command: "vault secret list --name ${{ env.OCI_VAULT_SECRET_NAME }} --compartment-id ${{ vars.COMPARTMENT_ID }}"
+      #     query: data[0].id
+
+      - name: delete secrets
+        uses: oracle-actions/run-oci-cli-command@v1.1
+        with:
+          command: "vault secret schedule-secret-deletion --secret-id ${{ env.OCI_VAULT_SECRET_OCID }}"
+  #     - name: delete vcn if created
+  #     - name: delete vault if created

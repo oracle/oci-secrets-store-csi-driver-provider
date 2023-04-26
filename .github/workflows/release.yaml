@@ -34,6 +34,12 @@ jobs:
           docker tag ${{ env.IMAGE_PATH }} ${{ env.PROVIDER_IMAGE_REPO }}:${{ env.PROVIDER_IMAGE_NEW_TAG }}
           docker push ${{ env.PROVIDER_IMAGE_REPO }}:${{ env.PROVIDER_IMAGE_NEW_TAG }}
 
+  charts-publish:
+    runs-on: ubuntu-latest
+    needs: ["build", "image-publish"]
+    env:
+      IMAGE_PATH : ${{ needs.build.outputs.IMAGE_PATH }}
+    steps:  
       - name: Checkout
         uses: actions/checkout@v3.3.0
         with:
@@ -52,7 +58,20 @@ jobs:
           -e 's|tag:.*|tag: ${{ env.PROVIDER_IMAGE_NEW_TAG }}|' \
           charts/oci-secrets-store-csi-driver-provider/values.yaml 
           helm package charts/oci-secrets-store-csi-driver-provider -d charts
-          helm repo index --url https://${GITHUB_ACTOR,,}.github.io/oci-secrets-store-csi-driver-provider/charts --merge charts/index.yaml charts
+          helm repo index --url ${{ vars.HELM_CHARTS_REPO }}/charts --merge charts/index.yaml charts
           git add charts
           git commit -m "Releasing chart version: ${{ github.ref_name }}"
           git push -u origin gh-pages
+      
+      - name: verify charts
+        run: |
+          wget ${{ vars.HELM_CHARTS_REPO }}/charts/index.yaml
+          CHART_VERSION=`grep "^version: " charts/oci-secrets-store-csi-driver-provider/Chart.yaml | sed -e "s/version: //"`
+          CHART_ENTRY=`yq -r '.entries."oci-secrets-store-csi-driver-provider"[] | select ( .version == "${CHART_VERSION}")' index.yaml`
+          if [ -z $CHART_ENTRY ];
+          then
+            echo "No chart entry found for published version: $CHART_VERSION"
+            exit 1
+          fi
+          CHART_URL=`echo $CHART_ENTRY | jq -r '.urls[0]'`
+          wget ${CHART_URL}

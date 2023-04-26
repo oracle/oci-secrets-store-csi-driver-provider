@@ -58,7 +58,7 @@ jobs:
       - name: helm release
         run: |
           git checkout gh-pages
-          git checkout origin/main charts
+          git checkout origin/OKE-25829 charts
           sed -i -e 's|repository:.*|repository: ${{ env.PROVIDER_IMAGE_REPO }}|' \
           -e 's|tag:.*|tag: ${{ env.PROVIDER_IMAGE_NEW_TAG }}|' \
           charts/oci-secrets-store-csi-driver-provider/values.yaml 

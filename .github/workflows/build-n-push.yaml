@@ -1,0 +1,49 @@
+name: BuildnPush
+
+on:
+  workflow_call:
+    inputs:
+      IMAGE_REGISTRY:
+        required: true
+        type: string 
+    outputs:
+      IMAGE_PATH:
+        description: "Image Path"
+        value: ${{ jobs.image-build-n-push.outputs.IMAGE_PATH }}
+
+jobs:
+  unit-tests:
+    uses: ./.github/workflows/unit-tests.yaml
+  image-build-n-push:
+    needs: [unit-tests]
+    runs-on: ubuntu-latest
+    name: Builds container image and pushes to registry
+    env:
+      IMAGE_REGISTRY: ${{ inputs.IMAGE_REGISTRY }}
+    outputs:
+      IMAGE_PATH: ${{ steps.print-docker-image-path.outputs.IMAGE_PATH }}
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v3.3.0
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+        with:
+          platforms: amd64
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Log into GitHub Container Registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${GITHUB_ACTOR,,} --password-stdin
+
+      - name: Build Image
+        run: IMAGE_REGISTRY="${{ env.IMAGE_REGISTRY }}" make docker-build
+
+      - name: Push Image
+        run: IMAGE_REGISTRY="${{ env.IMAGE_REGISTRY }}" make docker-push
+
+      - name: Print Image Path
+        id: print-docker-image-path
+        run: echo IMAGE_PATH=`IMAGE_REGISTRY="${{ env.IMAGE_REGISTRY }}" make print-docker-image-path` >> $GITHUB_OUTPUT

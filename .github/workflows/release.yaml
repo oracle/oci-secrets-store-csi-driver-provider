@@ -16,7 +16,10 @@ jobs:
     runs-on: ubuntu-latest
     needs: ["build"]
     env:
-      IMAGE_PATH : ${{ needs.build.outputs.IMAGE_PATH }}
+      IMAGE_PATH: ${{ needs.build.outputs.IMAGE_PATH }}
+    outputs:
+      PROVIDER_IMAGE_REPO: ${{ env.PROVIDER_IMAGE_REPO }}
+      PROVIDER_IMAGE_NEW_TAG: ${{ env.PROVIDER_IMAGE_NEW_TAG }}
     steps:
 
       - name: Log into GitHub Container Registry
@@ -28,17 +31,19 @@ jobs:
           echo PROVIDER_IMAGE_REPO=`echo ${{ env.IMAGE_PATH }} | sed -e "s/:.*$//"` >> $GITHUB_ENV
           echo PROVIDER_IMAGE_NEW_TAG=${{ github.ref_name }} >> $GITHUB_ENV
           
-      - name: tag Image with release name
-        run: |
-          docker pull ${{ env.IMAGE_PATH }}
-          docker tag ${{ env.IMAGE_PATH }} ${{ env.PROVIDER_IMAGE_REPO }}:${{ env.PROVIDER_IMAGE_NEW_TAG }}
-          docker push ${{ env.PROVIDER_IMAGE_REPO }}:${{ env.PROVIDER_IMAGE_NEW_TAG }}
+      # - name: tag Image with release name
+      #   run: |
+      #     docker pull ${{ env.IMAGE_PATH }}
+      #     docker tag ${{ env.IMAGE_PATH }} ${{ env.PROVIDER_IMAGE_REPO }}:${{ env.PROVIDER_IMAGE_NEW_TAG }}
+      #     docker push ${{ env.PROVIDER_IMAGE_REPO }}:${{ env.PROVIDER_IMAGE_NEW_TAG }}
 
   charts-publish:
     runs-on: ubuntu-latest
     needs: ["build", "image-publish"]
     env:
       IMAGE_PATH : ${{ needs.build.outputs.IMAGE_PATH }}
+      PROVIDER_IMAGE_REPO: ${{ needs.image-publish.outputs.PROVIDER_IMAGE_REPO }}
+      PROVIDER_IMAGE_NEW_TAG: ${{ needs.image-publish.outputs.PROVIDER_IMAGE_NEW_TAG }}
     steps:  
       - name: Checkout
         uses: actions/checkout@v3.3.0

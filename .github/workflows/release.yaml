@@ -20,7 +20,7 @@ jobs:
     steps:
 
       - name: Log into GitHub Container Registry
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${GITHUB_ACTOR,,} --password-stdin
+        run: echo "${{ secrets.CR_PAT }}" | docker login ghcr.io -u ${GITHUB_ACTOR,,} --password-stdin
 
       - name: split image path into repo and tag
         id: split-image-path

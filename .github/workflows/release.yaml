@@ -77,7 +77,7 @@ jobs:
           echo ${CHART_VERSION}
           CHART_ENTRY=`yq -r ".entries.\"oci-secrets-store-csi-driver-provider\"[] | select ( .version == \"${CHART_VERSION}\")" index.yaml`
           echo ${CHART_ENTRY}
-          if [ -z "$CHART_ENTRY" ];
+          if [ ${#CHART_ENTRY} -eq 0 ];
           then
             echo "No chart entry found for published version: $CHART_VERSION"
             exit 1

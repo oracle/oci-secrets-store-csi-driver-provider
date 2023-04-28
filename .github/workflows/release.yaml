@@ -70,25 +70,25 @@ jobs:
           git commit -m "Releasing chart version: ${{ github.ref_name }}"
           git push -u origin gh-pages
       
-      - name: verify chart version
-        run: |
-          wget ${{ vars.HELM_CHARTS_REPO }}/charts/index.yaml
-          CHART_VERSION=`grep "^version: " charts/oci-secrets-store-csi-driver-provider/Chart.yaml | sed -e "s/version: //"`
-          echo ${CHART_VERSION}
-          CHART_ENTRY=`yq -r ".entries.\"oci-secrets-store-csi-driver-provider\"[] | select ( .version == \"${CHART_VERSION}\")" index.yaml`
-          echo ${CHART_ENTRY}
-          # if [ ${#CHART_ENTRY} -eq 0 ];
-          # then
-          #   echo "No chart entry found for published version: $CHART_VERSION"
-          #   exit 1
-          # fi
-          CHART_URL=`echo ${CHART_ENTRY} | jq -r '.urls[0]'`
-          if [ $? -ne 0 -o -z ${CHART_URL} ];
-          then
-            echo "No chart entry found for published version: $CHART_VERSION"
-            exit 1
-          fi
-          wget ${CHART_URL}
+      # - name: verify chart version
+      #   run: |
+      #     wget ${{ vars.HELM_CHARTS_REPO }}/charts/index.yaml
+      #     CHART_VERSION=`grep "^version: " charts/oci-secrets-store-csi-driver-provider/Chart.yaml | sed -e "s/version: //"`
+      #     echo ${CHART_VERSION}
+      #     CHART_ENTRY=`yq -r ".entries.\"oci-secrets-store-csi-driver-provider\"[] | select ( .version == \"${CHART_VERSION}\")" index.yaml`
+      #     echo ${CHART_ENTRY}
+      #     # if [ ${#CHART_ENTRY} -eq 0 ];
+      #     # then
+      #     #   echo "No chart entry found for published version: $CHART_VERSION"
+      #     #   exit 1
+      #     # fi
+      #     CHART_URL=`echo ${CHART_ENTRY} | jq -r '.urls[0]'`
+      #     if [ $? -ne 0 -o -z ${CHART_URL} ];
+      #     then
+      #       echo "No chart entry found for published version: $CHART_VERSION"
+      #       exit 1
+      #     fi
+      #     wget ${CHART_URL}
 
   charts-deploy:
     runs-on: ubuntu-latest
@@ -103,6 +103,15 @@ jobs:
       - name: deploy helm chart
         run: |
           helm repo add oci-provider https://rajashekhargundeti.github.io/oci-secrets-store-csi-driver-provider/charts
+          PUBLISHED_CHART_VERSION=`helm search repo oci-provider/oci-secrets-store-csi-driver-provider | grep ^oci | awk '{print $2}'`
+          LOCAL_CHART_VERSION=`grep "^version: " charts/oci-secrets-store-csi-driver-provider/Chart.yaml | sed -e "s/version: //"`
+          echo $PUBLISHED_CHART_VERSION
+          echo $LOCAL_CHART_VERSION
+          if [ "${PUBLISHED_CHART_VERSION}" != "${LOCAL_CHART_VERSION}" ];
+          then
+            echo "published version and local versions are not matching"
+            exit 1
+          fi
           helm install oci-provider oci-provider/oci-secrets-store-csi-driver-provider -n kube-system
           kubectl get daemonset -n kube-system \
           --selector='app.kubernetes.io/name in (oci-secrets-store-csi-driver-provider, secrets-store-csi-driver)'

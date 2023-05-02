@@ -67,8 +67,18 @@ jobs:
           helm repo index --url ${{ vars.HELM_CHARTS_REPO }}/charts --merge charts/index.yaml temp-charts
           mv temp-charts/index.yaml charts/index.yaml
           git add charts
-          git commit -m "Releasing chart version: ${{ github.ref_name }}"
+          git commit -m "Releasing version: ${{ github.ref_name }}"
           git push -u origin gh-pages
+          helm repo add oci-provider https://rajashekhargundeti.github.io/oci-secrets-store-csi-driver-provider/charts
+          PUBLISHED_CHART_VERSION=`helm search repo oci-provider/oci-secrets-store-csi-driver-provider | grep ^oci | awk '{print $2}'`
+          LOCAL_CHART_VERSION=`grep "^version: " charts/oci-secrets-store-csi-driver-provider/Chart.yaml | sed -e "s/version: //"`
+          echo $PUBLISHED_CHART_VERSION
+          echo $LOCAL_CHART_VERSION
+          if [ "${PUBLISHED_CHART_VERSION}" != "${LOCAL_CHART_VERSION}" ];
+          then
+            echo "published version and local versions are not matching"
+            exit 1
+          fi
 
       - name: verify published chart version
         run: |

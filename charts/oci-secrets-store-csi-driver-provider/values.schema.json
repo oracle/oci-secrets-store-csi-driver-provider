@@ -144,10 +144,6 @@
         "profilingPort": {
           "description": "Profiling port",
           "type": "integer"
-        },
-        "enableIMDSLookup": {
-          "description": "Enable IMDS lookup",
-          "type": "boolean"
         }
       },
       "required": [

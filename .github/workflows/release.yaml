@@ -87,6 +87,8 @@ jobs:
         run: |
           helm repo add oci-provider https://rajashekhargundeti.github.io/oci-secrets-store-csi-driver-provider/charts
           PUBLISHED_CHART_VERSION=`helm search repo oci-provider/oci-secrets-store-csi-driver-provider | grep ^oci | awk '{print $2}'`
+          git checkout gh-pages
+          git checkout origin/OKE-25829 charts
           LOCAL_CHART_VERSION=`grep "^version: " charts/oci-secrets-store-csi-driver-provider/Chart.yaml | sed -e "s/version: //"`
           echo $PUBLISHED_CHART_VERSION
           echo $LOCAL_CHART_VERSION
@@ -123,6 +125,16 @@ jobs:
     runs-on: ubuntu-latest
     needs: [ "charts-publish"]
     steps:
+      - name: Checkout
+        uses: actions/checkout@v3.3.0
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.name "$GITHUB_ACTOR"
+          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+      
       - name: Create k8s Kind Cluster
         uses: helm/kind-action@v1.4.0
 
@@ -132,15 +144,18 @@ jobs:
       - name: deploy helm chart
         run: |
           helm repo add oci-provider https://rajashekhargundeti.github.io/oci-secrets-store-csi-driver-provider/charts
-          # PUBLISHED_CHART_VERSION=`helm search repo oci-provider/oci-secrets-store-csi-driver-provider | grep ^oci | awk '{print $2}'`
-          # LOCAL_CHART_VERSION=`grep "^version: " charts/oci-secrets-store-csi-driver-provider/Chart.yaml | sed -e "s/version: //"`
-          # echo $PUBLISHED_CHART_VERSION
-          # echo $LOCAL_CHART_VERSION
-          # if [ "${PUBLISHED_CHART_VERSION}" != "${LOCAL_CHART_VERSION}" ];
-          # then
-          #   echo "published version and local versions are not matching"
-          #   exit 1
-          # fi
+          git checkout gh-pages
+          git pull origin gh-pages
+          # git checkout origin/OKE-25829 charts
+          PUBLISHED_CHART_VERSION=`helm search repo oci-provider/oci-secrets-store-csi-driver-provider | grep ^oci | awk '{print $2}'`
+          LOCAL_CHART_VERSION=`grep "^version: " charts/oci-secrets-store-csi-driver-provider/Chart.yaml | sed -e "s/version: //"`
+          echo "PUBLISHED_CHART_VERSION=$PUBLISHED_CHART_VERSION"
+          echo "LOCAL_CHART_VERSION=$LOCAL_CHART_VERSION"
+          if [ "${PUBLISHED_CHART_VERSION}" != "${LOCAL_CHART_VERSION}" ];
+          then
+            echo "published version and local versions are not matching"
+            exit 1
+          fi
           helm install oci-provider oci-provider/oci-secrets-store-csi-driver-provider -n kube-system
           kubectl get daemonset -n kube-system \
           --selector='app.kubernetes.io/name in (oci-secrets-store-csi-driver-provider, secrets-store-csi-driver)'

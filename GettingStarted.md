@@ -10,7 +10,8 @@ The provider is a gRPC server accessible via the Unix domain socket. It's interf
       * [General](#prerequisites-general)
       * [Authentication & Authorization](#authn-authz)
          * [User Principal](#auth-user-principal)
-         * [Instance Princiapl](#auth-instance-principal)
+         * [Instance Principal](#auth-instance-principal)
+         * [Workload Identity](#auth-workload-identity)
          * [Access Policies](#access-policies)
    * [Deployment](#deployment)
       * [Helm](#helm-deployment)
@@ -72,7 +73,16 @@ kubectl create secret generic oci-config \
 <a name="auth-instance-principal"></a>
 ### Instance Principal
 Instance principal would work only on OKE cluster.
-Access should be granted using Access Policies(See [Access Policies](#access-polices) section).
+Access should be granted using Access Policies(See [Access Policies](#access-policies) section).
+
+<a name="auth-workload-identity"></a>
+### Workload Identity
+Workload Identity works only in OKE Enhanced clusters.
+
+Access should be granted using Access Policies(See [Access Policies for Workloads](#access-policies-workloads) section).
+
+Worklaod Identity uses a Resource Principal auth, which requires settings a couple ENV variables on the pod, including the region where the cluster is deployed. To achieve this, make sure to specify the `provider.oci.auth.types.workloadIdentity.enabled=true` and `provider.oci.auth.types.workloadIdentity.region=<region>` parameters in the `values.yaml` for the Helm chart deployment, or as an inline parameters.
+
 <a name="access-policies"></a>
 ### Access Policies
 Access to the vault and secrets should be explicity granted using Policies in case of Instance principal authencation or other users(non owner of vault) or groups of tenancy in case of user principal authentication.
@@ -103,6 +113,14 @@ It involves two steps
 
    More information on [Policy](https://docs.oracle.com/en-us/iaas/Content/Identity/Concepts/policysyntax.htm)
 
+<a name="access-policies-workload"></a>
+### Access Policies for Workloads
+
+With Workload Identity authentication, only a policy is required, which defines the kubernetes workload the policy works for:
+
+`allow any-user to use secret-family in compartment <compartment-name> where ALL {request.principal.type='workload', request.principal.namespace ='<namespace>', request.principal.service_account = 'oci-secrets-store-csi-driver-provider-sa', request.principal.cluster_id = 'ocid1.cluster.oc1....'}
+`
+
 <a name="deployment"></a>
 ### Deployment
 Provider and Driver would be deployed as Daemonset. `kube-system` namespace is preferred, but not restricted.
@@ -132,7 +150,7 @@ Default values are provided in `charts/oci-secrets-store-csi-driver-provider/val
    kubectl apply -f deploy/provider.daemonset.yaml
    kubectl apply -f deploy/provider.serviceaccount.yaml
 
-   # if user authention principal is required
+   # if user authentication principal is required
    kubectl apply -f deploy/provider.roles.yaml
    ```
 <a name="provider-verification"></a>

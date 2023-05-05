@@ -35,6 +35,9 @@ provider:
           enabled: true
         user:
           enabled: true
+        workloadIdentity:
+          enabled: true
+          region: ""
 
   # socket endpoint for connections
   endpoint: "unix:///opt/provider/sockets/oci.sock"

@@ -168,6 +168,7 @@ type OCIPrincipalType string
 const (
 	Instance OCIPrincipalType = "instance"
 	User     OCIPrincipalType = "user"
+	Workload OCIPrincipalType = "workload"
 )
 
 type VaultID string
@@ -178,6 +179,8 @@ func MapToPrincipalType(authType string) (OCIPrincipalType, error) {
 		return Instance, nil
 	case string(User):
 		return User, nil
+	case string(Workload):
+		return Workload, nil
 	default:
 		return "", fmt.Errorf("unknown OCI principal type: %v", authType)
 	}

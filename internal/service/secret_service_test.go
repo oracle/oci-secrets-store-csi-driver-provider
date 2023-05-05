@@ -15,6 +15,7 @@ import (
 	"github.com/oracle-samples/oci-secrets-store-csi-driver-provider/internal/testutils"
 	"github.com/oracle-samples/oci-secrets-store-csi-driver-provider/internal/types"
 	"github.com/oracle/oci-go-sdk/v65/common"
+	"github.com/oracle/oci-go-sdk/v65/common/auth"
 	"github.com/oracle/oci-go-sdk/v65/secrets"
 )
 
@@ -40,6 +41,8 @@ func (factory *MockOCISecretClientFactory) createConfigProvider( //nolint:iretur
 		return common.NewRawConfigurationProvider("tenancy", "user", "region", "fingerprint", "privatekey", nil), nil
 	case types.Instance:
 		return common.NewRawConfigurationProvider("tenancy", "user", "region", "fingerprint", "privatekey", nil), nil
+	case types.Workload:
+		return auth.OkeWorkloadIdentityConfigurationProvider()
 	default:
 		return nil, fmt.Errorf("unable to determine OCI principal type for configuration provider")
 	}
@@ -66,6 +69,8 @@ func (factory *MockErrorOCISecretClientFactory) createConfigProvider( //nolint:i
 		return common.NewRawConfigurationProvider("a", "b", "c", "d", "e", nil), nil
 	case types.Instance:
 		return common.NewRawConfigurationProvider("a", "b", "c", "d", "e", nil), nil
+	case types.Workload:
+		return auth.OkeWorkloadIdentityConfigurationProvider()
 	default:
 		return nil, fmt.Errorf("unable to determine OCI principal type for configuration provider")
 	}

@@ -1,4 +1,4 @@
-// Copyright (c) 2016, 2018, 2022, Oracle and/or its affiliates.  All rights reserved.
+// Copyright (c) 2016, 2018, 2023, Oracle and/or its affiliates.  All rights reserved.
 // This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
 // Code generated. DO NOT EDIT.
 
@@ -33,7 +33,7 @@ type ListSecretBundleVersionsRequest struct {
 	Page *string `mandatory:"false" contributesTo:"query" name:"page"`
 
 	// The field to sort by. You can specify only one sort order. The default
-	// order for `VERSION_NUMBER` is ascending.
+	// order for `VERSION_NUMBER` is descending.
 	SortBy ListSecretBundleVersionsSortByEnum `mandatory:"false" contributesTo:"query" name:"sortBy" omitEmpty:"true"`
 
 	// The sort order to use, either ascending (`ASC`) or descending (`DESC`).

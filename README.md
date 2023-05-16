@@ -1,3 +1,4 @@
+![](https://github.com/oracle-samples/oci-secrets-store-csi-driver-provider/blob/main/images/unavailability_banner.png)
 # OCI Secrets Store CSI Driver Provider
 
 Provider for OCI Vault allows you to get secrets stored in OCI Vault and mount them into Kubernetes pods via the  [Secrets Store CSI driver](https://github.com/kubernetes-sigs/secrets-store-csi-driver). 

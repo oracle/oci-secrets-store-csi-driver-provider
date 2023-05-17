@@ -115,7 +115,7 @@ Provider can be deployed in two ways
 ### Helm
 
 ```shell
-helm repo add oci-provider https://oracle-samples.github.io/oci-secrets-store-csi-driver-provider/charts
+helm repo add oci-provider https://oracle.github.io/oci-secrets-store-csi-driver-provider/charts
 helm install oci-provider oci-provider/oci-secrets-store-csi-driver-provider --namespace kube-system
 ```
 #### From Code Repository

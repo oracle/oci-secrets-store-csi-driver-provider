@@ -85,4 +85,4 @@ entries:
     urls:
     - https://oracle-samples.github.io/oci-secrets-store-csi-driver-provider/charts/oci-secrets-store-csi-driver-provider-0.2.5.tgz
     version: 0.2.5
-generated: "2023-04-20T14:00:58.091854918Z"
+generated: "2023-05-17T10:27:58.709734133Z"

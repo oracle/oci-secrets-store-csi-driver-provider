@@ -75,6 +75,7 @@ jobs:
       - name: verify published chart version
         run: |
           helm repo add oci-provider ${{ vars.HELM_CHARTS_REPO }}/charts
+          helm repo update oci-provider
           PUBLISHED_CHART_VERSION=`helm search repo oci-provider/oci-secrets-store-csi-driver-provider | grep ^oci | awk '{print $2}'`
           LOCAL_CHART_VERSION=`grep "^version: " charts/oci-secrets-store-csi-driver-provider/Chart.yaml | sed -e "s/version: //"`
           echo "PUBLISHED_CHART_VERSION=$PUBLISHED_CHART_VERSION"

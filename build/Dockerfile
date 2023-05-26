@@ -6,7 +6,7 @@
 #  
 
 # FROM docker-remote.artifactory.oci.oraclecorp.com/oraclelinux:7-slim AS build
-FROM golang:1.17.5 as build
+FROM golang:1.19 as build
 
 # Odo Base Image Support used to configure yum:
 # * pull rpms from artifactory by default and gpgcheck the repos that support it;

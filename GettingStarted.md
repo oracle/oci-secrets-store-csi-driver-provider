@@ -334,6 +334,7 @@ All changes to those modules should be reflected in the remote VCS repository.
    ```
    This command will update sources for that module in `vendor/` folder.
 1. Then commit those changes.
+1. Note: When 'sigs.k8s.io/secrets-store-csi-driver' is being upgraded, please make sure you upgrade version for secrets-store-csi-driver in the Chart.yaml
 
 <a name="versioning"></a>
 ## Versioning
@@ -341,7 +342,6 @@ Each build publishes 2 artifacts: Docker image and Helm chart.
 Both of these artifacts use SemVer 2.0.0 for versioning.
 
 That means that developers must increment both Docker image and Helm chart versions, otherwise, the build will fail:
-* Bump `version` field  in `ocibuild.conf` file for Docker image;
 * Specify the same version in `appVersion` field in `charts/oci-secrets-store-csi-driver-provider/Chart.yaml` file;
 * Bump `version` field in `charts/oci-secrets-store-csi-driver-provider/Chart.yaml` file.
 
@@ -357,7 +357,7 @@ Since this tool is standalone, the developers have to control the version themse
 
 <a name="ci-setup"></a>
 ## CI Setup
-GitHub Actions is used to implement Continuous integration pipeline.
+GitHub Actions is used to implement Continuous Integration pipeline.
 Location in the code base: .github/workflows
 Github workflows: 
 1. unit-tests.yaml – Runs unit test cases
@@ -370,7 +370,7 @@ Github workflows:
      * On pushing a commit
   * dependencies:
      * None
-2.	build-n-push.yaml – builds and pushes to image registry
+2.	build-n-push.yaml – builds and pushes image to image registry
   * Functionality: 
      * builds docker image 
      * pushes to registry

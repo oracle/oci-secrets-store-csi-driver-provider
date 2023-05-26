@@ -357,7 +357,7 @@ Since this tool is standalone, the developers have to control the version themse
 
 <a name="ci-setup"></a>
 ## CI Setup
-GitHub Actions is used to implement Continuous integration pipeline.
+GitHub Actions is used to implement Continuous Integration pipeline.
 Location in the code base: .github/workflows
 Github workflows: 
 1. unit-tests.yaml – Runs unit test cases
@@ -370,7 +370,7 @@ Github workflows:
      * On pushing a commit
   * dependencies:
      * None
-2.	build-n-push.yaml – builds and pushes to image registry
+2.	build-n-push.yaml – builds and pushes image to image registry
   * Functionality: 
      * builds docker image 
      * pushes to registry

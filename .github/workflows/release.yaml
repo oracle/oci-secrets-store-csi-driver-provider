@@ -65,9 +65,9 @@ jobs:
           -e 's|tag:.*|tag: ${{ env.PROVIDER_IMAGE_NEW_TAG }}|' \
           charts/oci-secrets-store-csi-driver-provider/values.yaml 
           helm package charts/oci-secrets-store-csi-driver-provider -d charts
-          # mkdir temp-charts
-          helm repo index --url ${{ vars.HELM_CHARTS_REPO }}/charts --merge charts/index.yaml charts
-          # mv temp-charts/index.yaml charts/index.yaml
+          mkdir temp-charts
+          helm repo index --url ${{ vars.HELM_CHARTS_REPO }}/charts --merge charts/index.yaml temp-charts
+          mv temp-charts/index.yaml charts/index.yaml
           git add charts
           git commit -m "Releasing version: ${{ github.ref_name }}"
           git push -u origin gh-pages

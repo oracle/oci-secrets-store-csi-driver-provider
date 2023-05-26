@@ -1,6 +1,6 @@
 module github.com/oracle-samples/oci-secrets-store-csi-driver-provider
 
-go 1.17
+go 1.19
 
 require (
 	github.com/oracle/oci-go-sdk/v65 v65.3.0

@@ -2,6 +2,9 @@ name: BuildnPush
 
 on:
   workflow_call:
+    secrets:
+      CR_PAT:
+        required: true
     inputs:
       IMAGE_REGISTRY:
         required: true

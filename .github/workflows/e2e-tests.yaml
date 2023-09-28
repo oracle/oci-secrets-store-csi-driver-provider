@@ -123,7 +123,7 @@ jobs:
         
   deploy-provider:
     runs-on: ubuntu-latest
-    name: Deploy Provider
+    name: Deploy Provider, App and Test Secrets
     needs: [ setup-vault , setup-cluster , build ]
     env:
       OCI_VAULT_ID: ${{ needs.setup-vault.outputs.OCI_VAULT_ID }}

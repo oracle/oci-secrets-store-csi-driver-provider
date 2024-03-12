@@ -1,4 +1,4 @@
-// Copyright (c) 2016, 2018, 2023, Oracle and/or its affiliates.  All rights reserved.
+// Copyright (c) 2016, 2018, 2024, Oracle and/or its affiliates.  All rights reserved.
 // This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
 // Code generated. DO NOT EDIT.
 
@@ -17,7 +17,7 @@ import (
 	"net/http"
 )
 
-//SecretsClient a client for Secrets
+// SecretsClient a client for Secrets
 type SecretsClient struct {
 	common.BaseClient
 	config *common.ConfigurationProvider
@@ -26,6 +26,9 @@ type SecretsClient struct {
 // NewSecretsClientWithConfigurationProvider Creates a new default Secrets client with the given configuration provider.
 // the configuration provider will be used for the default signer as well as reading the region
 func NewSecretsClientWithConfigurationProvider(configProvider common.ConfigurationProvider) (client SecretsClient, err error) {
+	if enabled := common.CheckForEnabledServices("secrets"); !enabled {
+		return client, fmt.Errorf("the Developer Tool configuration disabled this service, this behavior is controlled by OciSdkEnabledServicesMap variables. Please check if your local developer-tool-configuration.json file configured the service you're targeting or contact the cloud provider on the availability of this service")
+	}
 	provider, err := auth.GetGenericConfigurationProvider(configProvider)
 	if err != nil {
 		return client, err
@@ -39,7 +42,8 @@ func NewSecretsClientWithConfigurationProvider(configProvider common.Configurati
 
 // NewSecretsClientWithOboToken Creates a new default Secrets client with the given configuration provider.
 // The obotoken will be added to default headers and signed; the configuration provider will be used for the signer
-//  as well as reading the region
+//
+//	as well as reading the region
 func NewSecretsClientWithOboToken(configProvider common.ConfigurationProvider, oboToken string) (client SecretsClient, err error) {
 	baseClient, err := common.NewClientWithOboToken(configProvider, oboToken)
 	if err != nil {
@@ -76,7 +80,7 @@ func (client *SecretsClient) setConfigurationProvider(configProvider common.Conf
 	region, _ := configProvider.Region()
 	client.SetRegion(region)
 	if client.Host == "" {
-		return fmt.Errorf("Invalid region or Host. Endpoint cannot be constructed without endpointServiceName or serviceEndpointTemplate for a dotted region")
+		return fmt.Errorf("invalid region or Host. Endpoint cannot be constructed without endpointServiceName or serviceEndpointTemplate for a dotted region")
 	}
 	client.config = &configProvider
 	return nil
@@ -90,7 +94,7 @@ func (client *SecretsClient) ConfigurationProvider() *common.ConfigurationProvid
 // GetSecretBundle Gets a secret bundle that matches either the specified `stage`, `secretVersionName`, or `versionNumber` parameter.
 // If none of these parameters are provided, the bundle for the secret version marked as `CURRENT` will be returned.
 //
-// See also
+// # See also
 //
 // Click https://docs.cloud.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/secrets/GetSecretBundle.go.html to see an example of how to use GetSecretBundle API.
 // A default retry strategy applies to this operation GetSecretBundle()
@@ -149,7 +153,7 @@ func (client SecretsClient) getSecretBundle(ctx context.Context, request common.
 // GetSecretBundleByName Gets a secret bundle by secret name and vault ID, and secret version that matches either the specified `stage`, `secretVersionName`, or `versionNumber` parameter.
 // If none of these parameters are provided, the bundle for the secret version marked as `CURRENT` is returned.
 //
-// See also
+// # See also
 //
 // Click https://docs.cloud.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/secrets/GetSecretBundleByName.go.html to see an example of how to use GetSecretBundleByName API.
 // A default retry strategy applies to this operation GetSecretBundleByName()
@@ -207,7 +211,7 @@ func (client SecretsClient) getSecretBundleByName(ctx context.Context, request c
 
 // ListSecretBundleVersions Lists all secret bundle versions for the specified secret.
 //
-// See also
+// # See also
 //
 // Click https://docs.cloud.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/secrets/ListSecretBundleVersions.go.html to see an example of how to use ListSecretBundleVersions API.
 // A default retry strategy applies to this operation ListSecretBundleVersions()

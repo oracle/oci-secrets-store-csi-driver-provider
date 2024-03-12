@@ -3,7 +3,7 @@ module github.com/oracle-samples/oci-secrets-store-csi-driver-provider
 go 1.19
 
 require (
-	github.com/oracle/oci-go-sdk/v65 v65.34.0
+	github.com/oracle/oci-go-sdk/v65 v65.61.1
 	github.com/pkg/errors v0.9.1
 	github.com/rs/zerolog v1.26.1
 	go.opentelemetry.io/otel v0.20.0
@@ -51,7 +51,7 @@ require (
 	go.opentelemetry.io/otel/trace v0.20.0 // indirect
 	golang.org/x/net v0.7.0 // indirect
 	golang.org/x/oauth2 v0.4.0 // indirect
-	golang.org/x/sys v0.6.0 // indirect
+	golang.org/x/sys v0.8.0 // indirect
 	golang.org/x/term v0.5.0 // indirect
 	golang.org/x/text v0.7.0 // indirect
 	golang.org/x/time v0.0.0-20220609170525-579cf78fd858 // indirect

@@ -47,7 +47,7 @@ spec:
             - name: OCI_RESOURCE_PRINCIPAL_VERSION
               value: {{ .Values.provider.oci.auth.types.workload.resourcePrincipalVersion }}
             - name: OCI_RESOURCE_PRINCIPAL_REGION
-              value: "us-ashburn-1"
+              value: {{ .Values.provider.oci.auth.types.workload.resourcePrincipalRegion }}
           {{ end }}        
           resources:
             {{- toYaml .Values.provider.resources | nindent 12 }}

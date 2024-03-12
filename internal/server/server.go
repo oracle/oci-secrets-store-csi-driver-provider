@@ -12,6 +12,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"time"
 
 	"os"
 
@@ -21,8 +22,10 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"gopkg.in/yaml.v3"
+	authenticationv1 "k8s.io/api/authentication/v1"
 	core "k8s.io/api/core/v1"
 	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
+	apiMachineryTypes "k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	provider "sigs.k8s.io/secrets-store-csi-driver/provider/v1alpha1"
@@ -52,6 +55,10 @@ const vaultIDField = "vaultId"
 const secretProviderClassField = "secretProviderClass"
 const podNameField = "csi.storage.k8s.io/pod.name"
 const podNamespaceField = "csi.storage.k8s.io/pod.namespace"
+const podUIDField = "csi.storage.k8s.io/pod.uid"
+const podServiceAccountField = "csi.storage.k8s.io/serviceAccount.name"
+
+// const regionField = "region"
 
 // BuildVersion set during the build with ldflags
 var BuildVersion string
@@ -166,6 +173,31 @@ func (server *ProviderServer) retrieveAuthConfig(ctx context.Context,
 			return nil, fmt.Errorf("missing auth config data: %v", err)
 		}
 		auth.Config = *authCfg
+	} else if principalType == types.Workload {
+
+		podInfo := &types.PodInfo{
+			Name:               requestAttributes[podNameField],
+			UID:                apiMachineryTypes.UID(requestAttributes[podUIDField]),
+			ServiceAccountName: requestAttributes[podServiceAccountField],
+			Namespace:          requestAttributes[podNamespaceField],
+		}
+		saTokenStr, err := server.getSAToken(podInfo)
+		if err != nil {
+			err := fmt.Errorf("can not generate token for service account: %s, namespace: %s, Error: %v",
+				podInfo.ServiceAccountName, podInfo.Namespace, err)
+			return nil, err
+		}
+
+		// region := requestAttributes[regionField]
+		// if err != nil {
+		// 	err := fmt.Errorf("can not create resource principal, region is missing")
+		// 	return nil, resourcePrincipalError{err: err}
+		// }
+
+		auth.WorkloadIdentityCfg = types.WorkloadIdentityConfig{
+			SaToken: []byte(saTokenStr),
+			// Region: region,
+		}
 	}
 	return auth, nil
 }
@@ -193,6 +225,51 @@ func parseAuthConfig(secret *core.Secret, authConfigSecretName string) (*types.A
 		return nil, fmt.Errorf("invalid auth config data: %v", authConfigSecretName)
 	}
 	return authCfg, nil
+}
+
+func (server *ProviderServer) getK8sClientSet() (*kubernetes.Clientset, error) {
+	clusterCfg, err := rest.InClusterConfig()
+	if err != nil {
+		return nil, fmt.Errorf("can not get cluster config. error: %v", err)
+	}
+
+	clientset, err := kubernetes.NewForConfig(clusterCfg)
+	if err != nil {
+		return nil, fmt.Errorf("can not initialize kubernetes client. error: %v", err)
+	}
+
+	return clientset, nil
+}
+
+func (server *ProviderServer) getSAToken(podInfo *types.PodInfo) (string, error) {
+	clientSet, err := server.getK8sClientSet()
+	if err != nil {
+		return "", fmt.Errorf("unable to get k8s client: %v", err)
+	}
+	ttl := int64((15 * time.Minute).Seconds())
+	resp, err := clientSet.CoreV1().
+		ServiceAccounts(podInfo.Namespace).
+		CreateToken(context.Background(), podInfo.ServiceAccountName,
+			&authenticationv1.TokenRequest{
+				Spec: authenticationv1.TokenRequestSpec{
+					ExpirationSeconds: &ttl,
+					Audiences:         []string{"oci", "api"},
+					BoundObjectRef: &authenticationv1.BoundObjectReference{
+						Kind:       "Pod",
+						APIVersion: "v1",
+						Name:       podInfo.Name,
+						UID:        podInfo.UID,
+					},
+				},
+			},
+			meta.CreateOptions{},
+		)
+	if err != nil {
+		return "", fmt.Errorf("unable to fetch token from token api: %v", err)
+	}
+	// fmt.Printf("\nToken Response: %v", resp)
+	// fmt.Printf("\nToken: %v", resp.Status.Token)
+	return resp.Status.Token, nil
 }
 
 func (server *ProviderServer) readK8sSecret(ctx context.Context, namespace string,

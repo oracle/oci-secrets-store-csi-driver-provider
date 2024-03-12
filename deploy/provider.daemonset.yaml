@@ -36,6 +36,11 @@ spec:
             - --metrics-port=8198
             - --enable-pprof=true
             - --pprof-port=6060
+          env:
+            - name: OCI_RESOURCE_PRINCIPAL_VERSION
+              value: "2.2"
+            - name: OCI_RESOURCE_PRINCIPAL_REGION
+              value: "us-ashburn-1"     
           resources:
             requests:
               cpu: 50m

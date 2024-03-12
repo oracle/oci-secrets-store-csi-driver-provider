@@ -35,6 +35,9 @@ provider:
           enabled: true
         user:
           enabled: true
+        workload:
+          enabled: false
+          resourcePrincipalVersion: "2.2"
 
   # socket endpoint for connections
   endpoint: "unix:///opt/provider/sockets/oci.sock"

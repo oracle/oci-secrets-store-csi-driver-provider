@@ -11,19 +11,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nginx
+  name: nginx-1.1
   labels:
-    app: nginx
+    app: nginx-1.1
 spec:
   selector:
     matchLabels:
-      app: nginx
+      app: nginx-1.1
   template:
     metadata:
       labels:
-        app: nginx
+        app: nginx-1.1
     spec:
-      serviceAccountName: sa1
+      serviceAccountName: sa-1.1
       automountServiceAccountToken: true
       containers:
         - name: nginx
@@ -44,4 +44,4 @@ spec:
             driver: 'secrets-store.csi.k8s.io'
             readOnly: true
             volumeAttributes:
-              secretProviderClass: 'test-oci-provider-class'  # here we reference particular SecretProviderClass
+              secretProviderClass: 'test-oci-provider-class-1.1'  # here we reference particular SecretProviderClass

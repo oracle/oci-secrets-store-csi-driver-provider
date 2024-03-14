@@ -45,7 +45,7 @@ spec:
           {{ if .Values.provider.oci.auth.types.workload.enabled }}    
           env:
             - name: OCI_RESOURCE_PRINCIPAL_VERSION
-              value: {{ .Values.provider.oci.auth.types.workload.resourcePrincipalVersion }}
+              value: {{ .Values.provider.oci.auth.types.workload.resourcePrincipalVersion | quote }}
             - name: OCI_RESOURCE_PRINCIPAL_REGION
               value: {{ .Values.provider.oci.auth.types.workload.resourcePrincipalRegion }}
           {{ end }}        

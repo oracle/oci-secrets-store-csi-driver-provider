@@ -67,5 +67,7 @@ secrets-store-csi-driver:
   syncSecret:
     enabled: false
   enableSecretRotation: false
-  rotationPollInterval: 2m
+  rotationPollInterval: 2m  
+  tokenRequests:
+    - audience: ""
     

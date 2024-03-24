@@ -86,6 +86,8 @@ func (server *ProviderServer) Mount(
 			codes.InvalidArgument,
 			"failed to unmarshal SecretProviderClass parameters or attributes provided by driver")
 	}
+	// log.Info("Request Attributes").Str("attributes", attributes)
+	fmt.Println("attributes:", attributes)
 
 	secretBundleRequests, err := server.retrieveSecretRequests(attributes)
 	if err != nil {

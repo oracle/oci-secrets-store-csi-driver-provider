@@ -104,6 +104,24 @@
                         }
                       }
                     },
+                    "workload": {
+                      "description": "Settings for OCI Workload authentication",
+                      "type": "object",
+                      "properties": {
+                        "enabled": {
+                          "description": "Settings for OCI Workload authentication",
+                          "type": "boolean"
+                        },
+                        "resourcePrincipalVersion": {
+                          "description": "Settings for OCI Workload authentication",
+                          "type": "string"
+                        },
+                        "resourcePrincipalRegion": {
+                          "description": "Settings for OCI Workload authentication",
+                          "type": "string"
+                        }
+                      }
+                    },
                     "additionalProperties": false
                  }
               },

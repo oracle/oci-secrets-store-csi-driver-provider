@@ -48,6 +48,10 @@ func (factory *OCISecretClientFactory) createConfigProvider( //nolint:ireturn //
 		return common.NewRawConfigurationProvider(cfg.TenancyID, cfg.UserID,
 			cfg.Region, cfg.Fingerprint, cfg.PrivateKey, &cfg.Passphrase), nil
 
+	case types.Workload:
+		return auth.OkeWorkloadIdentityConfigurationProviderWithServiceAccountTokenProvider(
+			auth.NewSuppliedServiceAccountTokenProvider(string(authCfg.WorkloadIdentityCfg.SaToken)))
+
 	default:
 		return nil, fmt.Errorf("unable to determine OCI principal type for configuration provider")
 	}

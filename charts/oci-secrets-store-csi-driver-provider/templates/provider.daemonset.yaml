@@ -42,6 +42,13 @@ spec:
               name: health-port
             - containerPort: {{ .Values.provider.metricsPort }}
               name: metrics-port
+          {{ if .Values.provider.oci.auth.types.workload.enabled }}    
+          env:
+            - name: OCI_RESOURCE_PRINCIPAL_VERSION
+              value: {{ .Values.provider.oci.auth.types.workload.resourcePrincipalVersion | quote }}
+            - name: OCI_RESOURCE_PRINCIPAL_REGION
+              value: {{ .Values.provider.oci.auth.types.workload.resourcePrincipalRegion }}
+          {{ end }}     
           resources:
             {{- toYaml .Values.provider.resources | nindent 12 }}
           # Container should run as root to mount the hostPath volume and create Unix Domain Socket in that volume.

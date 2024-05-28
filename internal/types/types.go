@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"gopkg.in/yaml.v3"
+	apiMachineryTypes "k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
@@ -48,6 +49,13 @@ func determineFileName(name string, alias string) string {
 	}
 
 	return fileName
+}
+
+type PodInfo struct {
+	Namespace          string
+	Name               string
+	UID                apiMachineryTypes.UID
+	ServiceAccountName string
 }
 
 type VersionNumber int64
@@ -168,6 +176,7 @@ type OCIPrincipalType string
 const (
 	Instance OCIPrincipalType = "instance"
 	User     OCIPrincipalType = "user"
+	Workload OCIPrincipalType = "workload"
 )
 
 type VaultID string
@@ -178,6 +187,8 @@ func MapToPrincipalType(authType string) (OCIPrincipalType, error) {
 		return Instance, nil
 	case string(User):
 		return User, nil
+	case string(Workload):
+		return Workload, nil
 	default:
 		return "", fmt.Errorf("unknown OCI principal type: %v", authType)
 	}
@@ -191,8 +202,14 @@ type SecretServiceRequest struct {
 }
 
 type Auth struct {
-	Type   OCIPrincipalType
-	Config AuthConfig
+	Type                OCIPrincipalType
+	Config              AuthConfig
+	WorkloadIdentityCfg WorkloadIdentityConfig
+}
+
+type WorkloadIdentityConfig struct {
+	// Region  string
+	SaToken []byte
 }
 
 type AuthConfig struct {

@@ -78,10 +78,11 @@ github.com/modern-go/reflect2
 # github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822
 ## explicit
 github.com/munnerz/goautoneg
-# github.com/oracle/oci-go-sdk/v65 v65.3.0
+# github.com/oracle/oci-go-sdk/v65 v65.61.1
 ## explicit; go 1.13
 github.com/oracle/oci-go-sdk/v65/common
 github.com/oracle/oci-go-sdk/v65/common/auth
+github.com/oracle/oci-go-sdk/v65/common/utils
 github.com/oracle/oci-go-sdk/v65/secrets
 # github.com/pkg/errors v0.9.1
 ## explicit
@@ -173,7 +174,7 @@ golang.org/x/net/trace
 ## explicit; go 1.17
 golang.org/x/oauth2
 golang.org/x/oauth2/internal
-# golang.org/x/sys v0.5.0
+# golang.org/x/sys v0.8.0
 ## explicit; go 1.17
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/plan9

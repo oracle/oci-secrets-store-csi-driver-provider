@@ -27,4 +27,29 @@ subjects:
 - kind: ServiceAccount
   name: {{ .Chart.Name }}-sa
   namespace: {{ .Release.Namespace }}
-{{ end }}  
+{{ end }}
+
+{{ if .Values.provider.oci.auth.types.workload.enabled }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ .Chart.Name }}-workload-identity-cluster-role
+rules:
+- apiGroups: [""]
+  resources: ["serviceaccounts/token"]
+  verbs: ["create"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ .Chart.Name }}-workload-identity-cluster-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ .Chart.Name }}-workload-identity-cluster-role
+subjects:
+- kind: ServiceAccount
+  name: {{ .Chart.Name }}-sa
+  namespace: {{ .Release.Namespace }}
+{{ end }}

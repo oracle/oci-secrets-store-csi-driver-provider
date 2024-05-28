@@ -123,7 +123,7 @@ jobs:
         
   deploy-provider:
     runs-on: ubuntu-latest
-    name: Deploy Provider
+    name: Deploy Provider and Run Tests
     needs: [ setup-vault , setup-cluster , build ]
     env:
       OCI_VAULT_ID: ${{ needs.setup-vault.outputs.OCI_VAULT_ID }}
@@ -181,86 +181,208 @@ jobs:
           kubectl get daemonset --namespace oci-provider \
             --selector='app.kubernetes.io/name in (oci-secrets-store-csi-driver-provider, secrets-store-csi-driver)'
 
-      - name: update auth file with correct values
+      - name: user principal authentication - update auth file with correct values
         run: | 
           sed -e 's/region:.*/region: ${{ env.OCI_CLI_REGION }}/' \
           -e 's/tenancy:.*/tenancy: ${{ env.OCI_CLI_TENANCY }}/' \
           -e 's/user:.*/user: ${{ env.OCI_CLI_USER }}/' \
-          -e 's/fingerprint:.*/fingerprint: ${{ env.OCI_CLI_FINGERPRINT }}/' e2e/example/user-auth-config-example.yaml > e2e/example/user-auth-config-example.yaml.tmp
+          -e 's/fingerprint:.*/fingerprint: ${{ env.OCI_CLI_FINGERPRINT }}/' e2e/example/user-principal/user-auth-config-example.yaml > e2e/example/user-principal/user-auth-config-example.yaml.tmp
       
       # - name: print updated yaml file
       #   run: cat e2e/example/user-auth-config-example.yaml.tmp
-       
-      - name: delete secret if exists
-        continue-on-error: true
-        run: kubectl delete secret oci-config
 
-      - name: create kubernetes secret for user auth config
+      - name: user principal authentication - create namespace
+        # continue-on-error: true
+        run: kubectl create namespace app-user
+       
+      - name: user principal authentication - delete secret if exists
+        continue-on-error: true
+        run: kubectl delete secret oci-config -n app-user
+
+      - name: user principal authentication - create kubernetes secret for user auth config
         run: |
           kubectl create secret generic oci-config \
-          --from-file=config=e2e/example/user-auth-config-example.yaml.tmp \
-          --from-literal=private-key="${{ env.OCI_CLI_KEY_CONTENT }}"
+          --from-file=config=e2e/example/user-principal/user-auth-config-example.yaml.tmp \
+          --from-literal=private-key="${{ env.OCI_CLI_KEY_CONTENT }}" -n app-user
 
-      - name: update spc file with correct values
+      - name: user principal authentication - update spc file with correct values
         run: | 
           sed -e 's/vaultId:.*/vaultId: ${{ env.OCI_VAULT_ID }}/' \
           -e 's/authType:.*/authType: user/' \
-          -e 's/- name:.*/- name: ${{ env.OCI_VAULT_SECRET_NAME }}/' e2e/example/secret-provider-class.yaml > e2e/example/secret-provider-class.yaml.tmp
+          -e 's/- name:.*/- name: ${{ env.OCI_VAULT_SECRET_NAME }}/' e2e/example/user-principal/secret-provider-class.yaml > e2e/example/user-principal/secret-provider-class.yaml.tmp
 
-      - name: update deployment file with secret name
+      - name: user principal authentication - update deployment file with secret name
         run: | 
           sed -e 's/testingSecretName:.*/testingSecretName: ${{ env.OCI_VAULT_SECRET_NAME }}/' \
-            e2e/example/app.deployment.yaml > e2e/example/app.deployment.yaml.tmp
+            e2e/example/user-principal/app.deployment.yaml > e2e/example/user-principal/app.deployment.yaml.tmp
 
-      - name: print updated yaml file
-        run: cat e2e/example/secret-provider-class.yaml.tmp
+      - name: user principal authentication - print updated yaml file
+        run: cat e2e/example/user-principal/secret-provider-class.yaml.tmp
 
-      - name: deploy spc
-        run: kubectl apply -f e2e/example/secret-provider-class.yaml.tmp 
+      - name: user principal authentication - deploy spc
+        run: kubectl apply -f e2e/example/user-principal/secret-provider-class.yaml.tmp -n app-user
 
-      - name: deploy workload
-        run: kubectl apply -f e2e/example/app.deployment.yaml.tmp
+      - name: user principal authentication - deploy workload
+        run: kubectl apply -f e2e/example/user-principal/app.deployment.yaml.tmp -n app-user
 
-      - name: Wait for pod to run
-        id: wait-on-pod
+      - name: user principal authentication - Wait for pod to run
+        id: wait-on-pod-user
         # run: kubectl wait --for=jsonpath='{.status.phase}'=Running pods/${{ env.POD_NAME }} --timeout=90s
         run: sleep 90
 
-      - name: Verify pods are running
-        id: pod-names
-        run: kubectl get pods -l testingSecretName=${{ env.OCI_VAULT_SECRET_NAME }} -o='custom-columns=PodName:.metadata.name' --no-headers
+      - name: user principal authentication - Verify pods are running
+        id: pod-names-user
+        run: kubectl get pods -l testingSecretName=${{ env.OCI_VAULT_SECRET_NAME }} -o='custom-columns=PodName:.metadata.name' --no-headers -n app-user
 
-      - name: capture pod name into env
-        run: echo "POD_NAME=`kubectl get pods -l testingSecretName=${{ env.OCI_VAULT_SECRET_NAME }} -o='custom-columns=PodName:.metadata.name' --no-headers`" >> $GITHUB_ENV
+      - name: user principal authentication - capture pod name into env
+        run: echo "POD_NAME=`kubectl get pods -l testingSecretName=${{ env.OCI_VAULT_SECRET_NAME }} -o='custom-columns=PodName:.metadata.name' --no-headers -n app-user`" >> $GITHUB_ENV
 
-      - name: print secret value
-        id: print-secret-content
-        run: echo "SECRET_CONTENT=`kubectl exec -it ${{ env.POD_NAME }} -- cat /mnt/secrets-store/${{ env.OCI_VAULT_SECRET_NAME }} 2> /dev/null | base64`" >> $GITHUB_ENV
+      - name: user principal authentication - print secret value
+        id: print-secret-content-user
+        run: echo "SECRET_CONTENT=`kubectl exec -n app-user -it ${{ env.POD_NAME }} -- cat /mnt/secrets-store/${{ env.OCI_VAULT_SECRET_NAME }} 2> /dev/null | base64`" >> $GITHUB_ENV
 
       # - name: convert to base64
       #   id: convert-to-base64
       #   run: echo -n ${{ steps.print-secret-content.outputs.output }} | base64
 
-      - name: print values
+      - name: user principal authentication - print values
         run: echo "${{ env.SECRET_CONTENT }} == ${{ env.OCI_VAULT_SECRET_VALUE}}"
 
-      - name: verify value
+      - name: user principal authentication - verify value
         run: if [ "${{ env.SECRET_CONTENT }}" == "${{ env.OCI_VAULT_SECRET_VALUE}}" ]; then exit 0; else exit 1; fi
 
+      #
+      # End of user principal
+      #
+      - name: workload identity principal authentication - update spc file with correct values
+        run: | 
+          sed -e 's/vaultId:.*/vaultId: ${{ env.OCI_VAULT_ID }}/' \
+          -e 's/authType:.*/authType: workload/' \
+          -e 's/- name:.*/- name: ${{ env.OCI_VAULT_SECRET_NAME }}/' e2e/example/workload-identity/secret-provider-class.yaml > e2e/example/workload-identity/secret-provider-class.yaml.tmp
+
+      - name: workload identity principal authentication - update deployment file with secret name
+        run: | 
+          sed -e 's/testingSecretName:.*/testingSecretName: workload-${{ env.OCI_VAULT_SECRET_NAME }}/' \
+            e2e/example/workload-identity/app.deployment.yaml > e2e/example/workload-identity/app.deployment.yaml.tmp
+
+      - name: workload identity principal authentication - print updated yaml file
+        run: cat e2e/example/workload-identity/secret-provider-class.yaml.tmp
+
+      - name: workload identity principal authentication - create namespace
+        # continue-on-error: true
+        run: kubectl create namespace app-workload
+
+      - name: workload identity principal authentication - deploy namespace and service account
+        run: kubectl apply -f e2e/example/workload-identity/service-account.yaml -n app-workload
+
+      - name: workload identity principal authentication - deploy spc
+        run: kubectl apply -f e2e/example/workload-identity/secret-provider-class.yaml.tmp  -n app-workload
+
+      - name: workload identity principal authentication - deploy workload
+        run: kubectl apply -f e2e/example/workload-identity/app.deployment.yaml.tmp  -n app-workload
+
+      - name: workload identity principal authentication - Wait for pod to run
+        id: wait-on-pod-workload
+        # run: kubectl wait --for=jsonpath='{.status.phase}'=Running pods/${{ env.POD_NAME }} --timeout=90s
+        run: sleep 90
+
+      - name: workload identity principal authentication - Verify pods are running
+        id: pod-names-workload
+        run: kubectl get pods -l testingSecretName=workload-${{ env.OCI_VAULT_SECRET_NAME }} -o='custom-columns=PodName:.metadata.name' --no-headers  -n app-workload
+
+      - name: workload identity principal authentication - capture pod name into env
+        run: echo "POD_NAME=`kubectl get pods -l testingSecretName=workload-${{ env.OCI_VAULT_SECRET_NAME }} -o='custom-columns=PodName:.metadata.name' --no-headers  -n app-workload`" >> $GITHUB_ENV
+
+      - name: workload identity principal authentication - print secret value
+        id: print-secret-content-workload
+        run: echo "SECRET_CONTENT=`kubectl exec -n app-workload -it ${{ env.POD_NAME }} -- cat /mnt/secrets-store/${{ env.OCI_VAULT_SECRET_NAME }} 2> /dev/null | base64`" >> $GITHUB_ENV
+
+      - name: workload identity principal authentication - print values
+        run: echo "${{ env.SECRET_CONTENT }} == ${{ env.OCI_VAULT_SECRET_VALUE}}"
+
+      - name: workload identity principal authentication - verify value
+        run: if [ "${{ env.SECRET_CONTENT }}" == "${{ env.OCI_VAULT_SECRET_VALUE}}" ]; then exit 0; else exit 1; fi  
+
+      #
+      # End of workload identity principal
+      #
+      - name: instance principal authentication - update spc file with correct values
+        run: | 
+          sed -e 's/vaultId:.*/vaultId: ${{ env.OCI_VAULT_ID }}/' \
+          -e 's/authType:.*/authType: instance/' \
+          -e 's/- name:.*/- name: ${{ env.OCI_VAULT_SECRET_NAME }}/' e2e/example/instance-principal/secret-provider-class.yaml > e2e/example/instance-principal/secret-provider-class.yaml.tmp
+
+      - name: instance principal authentication - update deployment file with secret name
+        run: | 
+          sed -e 's/testingSecretName:.*/testingSecretName: instance-${{ env.OCI_VAULT_SECRET_NAME }}/' \
+            e2e/example/instance-principal/app.deployment.yaml > e2e/example/instance-principal/app.deployment.yaml.tmp
+
+      - name: instance principal authentication - print updated yaml file
+        run: cat e2e/example/instance-principal/secret-provider-class.yaml.tmp
+
+      - name: instance principal authentication - create namespace
+        # continue-on-error: true
+        run: kubectl create namespace app-instance
+
+      - name: instance principal authentication - deploy spc
+        run: kubectl apply -f e2e/example/instance-principal/secret-provider-class.yaml.tmp -n app-instance
+
+      - name: instance principal authentication - deploy workload
+        run: kubectl apply -f e2e/example/instance-principal/app.deployment.yaml.tmp -n app-instance
+
+      - name: instance principal authentication - Wait for pod to run
+        id: wait-on-pod-instance
+        # run: kubectl wait --for=jsonpath='{.status.phase}'=Running pods/${{ env.POD_NAME }} --timeout=90s
+        run: sleep 90
+
+      - name: instance principal authentication - Verify pods are running
+        id: pod-names-instance
+        run: kubectl get pods -l testingSecretName=instance-${{ env.OCI_VAULT_SECRET_NAME }} -o='custom-columns=PodName:.metadata.name' --no-headers  -n app-instance
+
+      - name: instance principal authentication - capture pod name into env
+        run: echo "POD_NAME=`kubectl get pods -l testingSecretName=instance-${{ env.OCI_VAULT_SECRET_NAME }} -o='custom-columns=PodName:.metadata.name' --no-headers  -n app-instance`" >> $GITHUB_ENV
+
+      - name: instance principal authentication - print secret value
+        id: print-secret-content-instance
+        run: echo "SECRET_CONTENT=`kubectl exec  -n app-instance -it ${{ env.POD_NAME }} -- cat /mnt/secrets-store/${{ env.OCI_VAULT_SECRET_NAME }} 2> /dev/null | base64`" >> $GITHUB_ENV
+
+      - name: instance principal authentication - print values
+        run: echo "${{ env.SECRET_CONTENT }} == ${{ env.OCI_VAULT_SECRET_VALUE}}"
+
+      - name: instance principal authentication - verify value
+        run: if [ "${{ env.SECRET_CONTENT }}" == "${{ env.OCI_VAULT_SECRET_VALUE}}" ]; then exit 0; else exit 1; fi    
+
       # cleanup
-      - name: remove deployment
+      - name: remove deployment - user principal authentication
         if: ${{ always() }} 
         run: |
-          kubectl delete -f e2e/example/app.deployment.yaml.tmp \
-            -f e2e/example/secret-provider-class.yaml.tmp
+          kubectl delete -f e2e/example/user-principal/app.deployment.yaml.tmp \
+            -f e2e/example/user-principal/secret-provider-class.yaml.tmp -n app-user
+
+      - name: remove deployment - workload identity authentication
+        if: ${{ always() }} 
+        run: |
+          kubectl delete -f e2e/example/workload-identity/secret-provider-class.yaml.tmp \
+            -f e2e/example/workload-identity/app.deployment.yaml.tmp \
+            -f e2e/example/workload-identity/service-account.yaml -n app-workload
+
+      - name: remove deployment - instance principal authentication
+        if: ${{ always() }} 
+        run: |
+          kubectl delete -f e2e/example/instance-principal/secret-provider-class.yaml.tmp \
+            -f e2e/example/instance-principal/app.deployment.yaml.tmp -n app-instance         
 
       - name: delete secret
         if: ${{ always() }} 
-        run: kubectl delete secret oci-config
+        run: kubectl delete secret oci-config -n app-user
       
       - name: uninstall provider
         if: ${{ always() }}
         run: helm uninstall oci-provider -n ${{ env.PROVIDER_NAMESPACE }}
+
+      - name: delete namespaces 
+        if: ${{ always() }}
+        run: kubectl delete namespace app-user app-workload app-instance 
 
   cleanup:
     runs-on: ubuntu-latest

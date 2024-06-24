@@ -38,11 +38,8 @@ jobs:
       - name: Log into GitHub Container Registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${GITHUB_ACTOR,,} --password-stdin
 
-      - name: Build Image
-        run: IMAGE_REGISTRY="${{ env.IMAGE_REGISTRY }}" make docker-build
-
-      - name: Push Image
-        run: IMAGE_REGISTRY="${{ env.IMAGE_REGISTRY }}" make docker-push
+      - name: Build and Push Image
+        run: IMAGE_REGISTRY="${{ env.IMAGE_REGISTRY }}" make docker-build-push
 
       - name: Print Image Path
         id: print-docker-image-path

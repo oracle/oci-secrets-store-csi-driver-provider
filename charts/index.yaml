@@ -3,14 +3,14 @@ entries:
   oci-secrets-store-csi-driver-provider:
   - apiVersion: v2
     appVersion: 0.10.1
-    created: "2025-06-26T09:52:18.09928559Z"
+    created: "2026-07-03T06:17:24.706426829Z"
     dependencies:
     - condition: secrets-store-csi-driver.install
       name: secrets-store-csi-driver
       repository: https://kubernetes-sigs.github.io/secrets-store-csi-driver/charts
       version: 1.3.3
     description: OCI Vault provider for the Secrets Store CSI driver.
-    digest: dd2560dfe4f3a5456adfa00949d04a75ea3e687be6b0c24b55f61b522a623c3c
+    digest: 1286f06f68dfeb14546335858d74e71f9b671e7581acdaa51594f8d92e8200b0
     keywords:
     - oci
     - secrets-store-csi-driver-provider
@@ -24,7 +24,7 @@ entries:
     version: 0.4.1
   - apiVersion: v2
     appVersion: 0.10.0
-    created: "2025-06-26T09:52:18.097315526Z"
+    created: "2026-07-03T06:17:24.703572593Z"
     dependencies:
     - condition: secrets-store-csi-driver.install
       name: secrets-store-csi-driver
@@ -45,7 +45,7 @@ entries:
     version: 0.4.0
   - apiVersion: v2
     appVersion: 0.9.5
-    created: "2025-06-26T09:52:18.095300108Z"
+    created: "2026-07-03T06:17:24.701733725Z"
     dependencies:
     - condition: secrets-store-csi-driver.install
       name: secrets-store-csi-driver
@@ -66,7 +66,7 @@ entries:
     version: 0.3.1
   - apiVersion: v2
     appVersion: 0.9.4
-    created: "2025-06-26T09:52:18.08896907Z"
+    created: "2026-07-03T06:17:24.699782105Z"
     dependencies:
     - condition: secrets-store-csi-driver.install
       name: secrets-store-csi-driver
@@ -87,7 +87,7 @@ entries:
     version: 0.3.0
   - apiVersion: v2
     appVersion: 0.9.4
-    created: "2025-06-26T09:52:18.087127704Z"
+    created: "2026-07-03T06:17:24.69705185Z"
     dependencies:
     - condition: secrets-store-csi-driver.install
       name: secrets-store-csi-driver
@@ -108,7 +108,7 @@ entries:
     version: 0.2.9
   - apiVersion: v2
     appVersion: 0.9.4
-    created: "2025-06-26T09:52:18.086007746Z"
+    created: "2026-07-03T06:17:24.695947085Z"
     dependencies:
     - condition: secrets-store-csi-driver.install
       name: secrets-store-csi-driver
@@ -129,7 +129,7 @@ entries:
     version: 0.2.8
   - apiVersion: v2
     appVersion: 0.9.3
-    created: "2025-06-26T09:52:18.084774218Z"
+    created: "2026-07-03T06:17:24.694829195Z"
     dependencies:
     - condition: secrets-store-csi-driver.install
       name: secrets-store-csi-driver
@@ -150,7 +150,7 @@ entries:
     version: 0.2.7
   - apiVersion: v2
     appVersion: 0.9.2
-    created: "2025-06-26T09:52:18.079486862Z"
+    created: "2026-07-03T06:17:24.693638518Z"
     dependencies:
     - condition: secrets-store-csi-driver.install
       name: secrets-store-csi-driver
@@ -171,7 +171,7 @@ entries:
     version: 0.2.6
   - apiVersion: v2
     appVersion: 0.9.2
-    created: "2025-06-26T09:52:18.07832107Z"
+    created: "2026-07-03T06:17:24.691847393Z"
     dependencies:
     - condition: secrets-store-csi-driver.install
       name: secrets-store-csi-driver
@@ -190,4 +190,4 @@ entries:
     urls:
     - https://oracle.github.io/oci-secrets-store-csi-driver-provider/charts/oci-secrets-store-csi-driver-provider-0.2.5.tgz
     version: 0.2.5
-generated: "2025-06-26T09:52:18.073649875Z"
+generated: "2026-07-03T06:17:24.69011285Z"

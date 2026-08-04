@@ -1,6 +1,6 @@
 module github.com/oracle-samples/oci-secrets-store-csi-driver-provider
 
-go 1.26.0
+go 1.26.5
 
 require (
 	github.com/oracle/oci-go-sdk/v65 v65.119.0
@@ -11,7 +11,7 @@ require (
 	go.opentelemetry.io/otel/exporters/prometheus v0.66.0
 	go.opentelemetry.io/otel/metric v1.44.0
 	go.opentelemetry.io/otel/sdk/metric v1.44.0
-	google.golang.org/grpc v1.82.0
+	google.golang.org/grpc v1.82.1
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/api v0.36.2
 	k8s.io/apimachinery v0.36.2

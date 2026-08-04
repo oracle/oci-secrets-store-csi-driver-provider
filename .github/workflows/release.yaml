@@ -6,6 +6,14 @@ on:
     tags:
       - "v*.*.*"
 
+permissions:
+  contents: write
+  packages: write
+
+concurrency:
+  group: release-${{ github.repository }}
+  cancel-in-progress: false
+
 jobs:
   build:
     uses: ./.github/workflows/build-n-push.yaml
@@ -20,18 +28,25 @@ jobs:
     env:
       IMAGE_PATH: ${{ needs.build.outputs.IMAGE_PATH }}
     outputs:
-      PROVIDER_IMAGE_REPO: ${{ env.PROVIDER_IMAGE_REPO }}
-      PROVIDER_IMAGE_NEW_TAG: ${{ env.PROVIDER_IMAGE_NEW_TAG }}
+      PROVIDER_IMAGE_REPO: ${{ steps.image_metadata.outputs.repository }}
+      PROVIDER_IMAGE_NEW_TAG: ${{ steps.image_metadata.outputs.tag }}
     steps:
 
       - name: Log into GitHub Container Registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${GITHUB_ACTOR,,} --password-stdin
 
-      - name: split image path into repo and tag
-        id: split-image-path
+      - name: Split image path into repository and tag
+        id: image_metadata
         run: |
-          echo PROVIDER_IMAGE_REPO=`echo ${{ env.IMAGE_PATH }} | sed -e "s/:.*$//"` >> $GITHUB_ENV
-          echo PROVIDER_IMAGE_NEW_TAG=${{ github.ref_name }} >> $GITHUB_ENV
+          set -euo pipefail
+
+          provider_image_repo="${IMAGE_PATH%:*}"
+          provider_image_new_tag="${GITHUB_REF_NAME}"
+
+          echo "PROVIDER_IMAGE_REPO=${provider_image_repo}" >> "${GITHUB_ENV}"
+          echo "PROVIDER_IMAGE_NEW_TAG=${provider_image_new_tag}" >> "${GITHUB_ENV}"
+          echo "repository=${provider_image_repo}" >> "${GITHUB_OUTPUT}"
+          echo "tag=${provider_image_new_tag}" >> "${GITHUB_OUTPUT}"
           
       - name: tag Image with release name
         run: |
@@ -43,7 +58,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: ["build", "image-publish"]
     env:
-      IMAGE_PATH : ${{ needs.build.outputs.IMAGE_PATH }}
+      CHART_DIR: charts/oci-secrets-store-csi-driver-provider
+      CHART_NAME: oci-secrets-store-csi-driver-provider
       PROVIDER_IMAGE_REPO: ${{ needs.image-publish.outputs.PROVIDER_IMAGE_REPO }}
       PROVIDER_IMAGE_NEW_TAG: ${{ needs.image-publish.outputs.PROVIDER_IMAGE_NEW_TAG }}
     steps:  
@@ -57,36 +73,145 @@ jobs:
           git config user.name "$GITHUB_ACTOR"
           git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
 
-      - name: helm release
+      - name: Prepare clean chart package
         run: |
-          git checkout gh-pages
-          git checkout origin/main charts
-          sed -i -e 's|repository:.*|repository: ${{ env.PROVIDER_IMAGE_REPO }}|' \
-          -e 's|tag:.*|tag: ${{ env.PROVIDER_IMAGE_NEW_TAG }}|' \
-          charts/oci-secrets-store-csi-driver-provider/values.yaml 
-          helm package charts/oci-secrets-store-csi-driver-provider -d charts
-          # mkdir temp-charts
-          helm repo index --url ${{ vars.HELM_CHARTS_REPO }}/charts --merge charts/index.yaml charts
-          # mv temp-charts/index.yaml charts/index.yaml
-          git add charts
-          git commit -m "Releasing version: ${{ github.ref_name }}"
-          git push -u origin gh-pages
+          set -euo pipefail
 
-      - name: verify published chart version
-        run: |
-          helm repo add oci-provider ${{ vars.HELM_CHARTS_REPO }}/charts
-          helm repo update oci-provider
-          PUBLISHED_CHART_VERSION=`helm search repo oci-provider/oci-secrets-store-csi-driver-provider | grep ^oci | awk '{print $2}'`
-          LOCAL_CHART_VERSION=`grep "^version: " charts/oci-secrets-store-csi-driver-provider/Chart.yaml | sed -e "s/version: //"`
-          echo "PUBLISHED_CHART_VERSION=$PUBLISHED_CHART_VERSION"
-          echo "LOCAL_CHART_VERSION=$LOCAL_CHART_VERSION"
-          if [ "${PUBLISHED_CHART_VERSION}" != "${LOCAL_CHART_VERSION}" ];
-          then
-            echo "published version and local versions are not matching"
+          git fetch origin main
+          if ! git merge-base --is-ancestor "${GITHUB_SHA}" origin/main; then
+            echo "The release tag must point to a commit on the main branch."
             exit 1
-          else
-            echo "published version and local versions are matching"  
-          fi    
+          fi
+
+          chart_version="$(awk '/^version:/ { print $2; exit }' "${CHART_DIR}/Chart.yaml")"
+          tag_version="${GITHUB_REF_NAME#v}"
+          if [[ "${chart_version}" != "${tag_version}" ]]; then
+            echo "Chart version ${chart_version} does not match release tag ${GITHUB_REF_NAME}."
+            exit 1
+          fi
+
+          chart_source="${RUNNER_TEMP}/${CHART_NAME}"
+          cp -R "${CHART_DIR}" "${chart_source}"
+
+          sed -i \
+            -e "s|^    repository:.*|    repository: ${PROVIDER_IMAGE_REPO}|" \
+            -e "s|^    tag:.*|    tag: ${PROVIDER_IMAGE_NEW_TAG}|" \
+            "${chart_source}/values.yaml"
+
+          mapfile -t dependency_archives < <(
+            find "${chart_source}/charts" -maxdepth 1 -type f \
+              -name 'secrets-store-csi-driver-*.tgz' -print
+          )
+          if [[ "${#dependency_archives[@]}" -ne 1 ]]; then
+            echo "Expected exactly one bundled Secrets Store CSI Driver chart, found ${#dependency_archives[@]}."
+            exit 1
+          fi
+
+          driver_chart_version="$(
+            tar -xOf "${dependency_archives[0]}" secrets-store-csi-driver/Chart.yaml |
+              awk '/^version:/ { print $2; exit }'
+          )"
+
+          helm lint "${chart_source}"
+          helm package "${chart_source}" --destination "${RUNNER_TEMP}"
+
+          chart_package="${CHART_NAME}-${chart_version}.tgz"
+          test -f "${RUNNER_TEMP}/${chart_package}"
+
+          echo "CHART_VERSION=${chart_version}" >> "${GITHUB_ENV}"
+          echo "CHART_PACKAGE=${chart_package}" >> "${GITHUB_ENV}"
+          echo "DRIVER_CHART_VERSION=${driver_chart_version}" >> "${GITHUB_ENV}"
+
+      - name: Publish chart
+        run: |
+          set -euo pipefail
+
+          git checkout gh-pages
+
+          if git cat-file -e "HEAD:charts/${CHART_PACKAGE}" 2>/dev/null; then
+            echo "Chart ${CHART_VERSION} has already been published."
+            exit 1
+          fi
+
+          # Keep the browsable chart source on gh-pages in sync without retaining
+          # dependency archives from older releases.
+          git rm -r --ignore-unmatch "${CHART_DIR}"
+          mkdir -p "$(dirname "${CHART_DIR}")"
+          cp -R "${RUNNER_TEMP}/${CHART_NAME}" "${CHART_DIR}"
+          cp "${RUNNER_TEMP}/${CHART_PACKAGE}" "charts/${CHART_PACKAGE}"
+
+          index_workdir="${RUNNER_TEMP}/chart-index"
+          mkdir -p "${index_workdir}"
+          cp "${RUNNER_TEMP}/${CHART_PACKAGE}" "${index_workdir}/"
+          helm repo index \
+            --url "${{ vars.HELM_CHARTS_REPO }}/charts" \
+            --merge charts/index.yaml \
+            "${index_workdir}"
+          cp "${index_workdir}/index.yaml" charts/index.yaml
+
+          git add "${CHART_DIR}" "charts/${CHART_PACKAGE}" charts/index.yaml
+          git diff --cached --check
+          git commit -m "Releasing version: ${GITHUB_REF_NAME}"
+          git push origin gh-pages
+
+      - name: Verify published chart contents
+        run: |
+          set -euo pipefail
+
+          helm repo add oci-provider "${{ vars.HELM_CHARTS_REPO }}/charts" --force-update
+
+          published_dir="${RUNNER_TEMP}/published-chart"
+          mkdir -p "${published_dir}"
+          published_package="${published_dir}/${CHART_PACKAGE}"
+
+          for attempt in {1..12}; do
+            helm repo update oci-provider || true
+            if helm pull oci-provider/${CHART_NAME} \
+              --version "${CHART_VERSION}" \
+              --destination "${published_dir}"; then
+              break
+            fi
+
+            if [[ "${attempt}" -eq 12 ]]; then
+              echo "Chart ${CHART_VERSION} was not available after waiting for GitHub Pages."
+              exit 1
+            fi
+            sleep 10
+          done
+
+          published_chart_version="$(
+            tar -xOf "${published_package}" "${CHART_NAME}/Chart.yaml" |
+              awk '/^version:/ { print $2; exit }'
+          )"
+          if [[ "${published_chart_version}" != "${CHART_VERSION}" ]]; then
+            echo "Published chart version ${published_chart_version} does not match ${CHART_VERSION}."
+            exit 1
+          fi
+
+          dependency_entry_count="$(
+            tar -tzf "${published_package}" |
+              awk '/\/charts\/secrets-store-csi-driver\/Chart.yaml$/ { count++ } END { print count + 0 }'
+          )"
+          if [[ "${dependency_entry_count}" -ne 1 ]]; then
+            echo "Published chart contains ${dependency_entry_count} bundled CSI Driver chart entries; expected 1."
+            exit 1
+          fi
+
+          published_driver_chart_version="$(
+            tar -xOf "${published_package}" \
+              "${CHART_NAME}/charts/secrets-store-csi-driver/Chart.yaml" |
+              awk '/^version:/ { print $2; exit }'
+          )"
+          if [[ "${published_driver_chart_version}" != "${DRIVER_CHART_VERSION}" ]]; then
+            echo "Published CSI Driver chart version ${published_driver_chart_version} does not match ${DRIVER_CHART_VERSION}."
+            exit 1
+          fi
+
+          helm lint "${published_package}"
+          helm template release-verification "${published_package}" \
+            --kube-version 1.30.0 > "${RUNNER_TEMP}/published-chart.yaml"
+          grep -F "secrets-store-csi-driver-${DRIVER_CHART_VERSION}" \
+            "${RUNNER_TEMP}/published-chart.yaml"
 
   # charts-deploy:
   #   runs-on: ubuntu-latest
